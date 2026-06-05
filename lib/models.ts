@@ -69,6 +69,11 @@ export function getModelClient(model: LLMModel, config: LLMModelConfig) {
         apiKey: apiKey || process.env.DEEPSEEK_API_KEY,
         baseURL: baseURL || 'https://api.deepseek.com/v1',
       })(modelNameString),
+    nvidia: () =>
+      createOpenAI({
+        apiKey: apiKey || process.env.NVIDIA_API_KEY,
+        baseURL: baseURL || 'https://integrate.api.nvidia.com/v1',
+      })(modelNameString),
   }
 
   const createClient =

@@ -71,3 +71,47 @@ export const morphEditSchema = z.object({
 })
 
 export type MorphEditSchema = z.infer<typeof morphEditSchema>
+
+// ── Resume Content Schema ────────────────────────────────────────────────
+// Used when the app is in RESUME_MODE. The model emits structured resume
+// sections that the <ResumeArtifact /> renders dynamically.
+
+export const resumeItemSchema = z.object({
+  label: z.string().describe('Title or label for the item.'),
+  value: z.string().optional().describe('Short value or description.'),
+  detail: z.string().optional().describe('Longer explanation or bullet point.'),
+  tags: z.array(z.string()).optional().describe('Small tags/badges, e.g. tech stack or dates.'),
+  url: z.string().optional().describe('Optional link URL.'),
+})
+
+export const resumeSectionSchema = z.object({
+  type: z.enum([
+    'highlights',
+    'experience',
+    'projects',
+    'skills',
+    'education',
+    'certifications',
+    'summary',
+  ]).describe('Section type key.'),
+  title: z.string().describe('Human-readable section title.'),
+  items: z.array(resumeItemSchema).describe('Ordered list of items in this section.'),
+})
+
+export const resumeContentSchema = z.object({
+  commentary: z
+    .string()
+    .describe('A warm, conversational response to the recruiter question.'),
+  focus: z
+    .string()
+    .describe('Short phrase describing what this resume view is tuned for.'),
+  sections: z
+    .array(resumeSectionSchema)
+    .describe(
+      'Ordered resume sections. Omit sections that are not relevant to the question. Always include highlights + relevant sections — do not dump the full resume unless asked.',
+    ),
+})
+
+export type ResumeItemSchema = z.infer<typeof resumeItemSchema>
+export type ResumeSectionSchema = z.infer<typeof resumeSectionSchema>
+export type ResumeContentSchema = z.infer<typeof resumeContentSchema>

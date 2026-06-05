@@ -4,11 +4,15 @@ import { ExecutionResult } from '@/lib/types'
 import { DeepPartial } from 'ai'
 import { LoaderIcon, Terminal } from 'lucide-react'
 import { useEffect } from 'react'
+import { StarterChip } from '@/lib/profile'
 
 export function Chat({
   messages,
   isLoading,
   setCurrentPreview,
+  isResumeMode,
+  starterChips,
+  onChipClick,
 }: {
   messages: Message[]
   isLoading: boolean
@@ -16,6 +20,9 @@ export function Chat({
     fragment: DeepPartial<FragmentSchema> | undefined
     result: ExecutionResult | undefined
   }) => void
+  isResumeMode?: boolean
+  starterChips?: StarterChip[]
+  onChipClick?: (prompt: string) => void
 }) {
   useEffect(() => {
     const chatContainer = document.getElementById('chat-container')
@@ -24,11 +31,36 @@ export function Chat({
     }
   }, [JSON.stringify(messages)])
 
+  const showChips = isResumeMode && messages.length === 0 && !isLoading
+
   return (
     <div
       id="chat-container"
       className="flex flex-col pb-12 gap-2 overflow-y-auto max-h-full"
     >
+      {showChips && starterChips && (
+        <div className="px-4 py-6 space-y-4">
+          <div className="text-center space-y-1">
+            <p className="text-sm text-muted-foreground">
+              Ask about Khiw's experience, projects, or skills.
+            </p>
+            <p className="text-xs text-muted-foreground/60">
+              The resume on the right will adapt to your question.
+            </p>
+          </div>
+          <div className="flex flex-wrap justify-center gap-2">
+            {starterChips.map((chip) => (
+              <button
+                key={chip.label}
+                onClick={() => onChipClick?.(chip.prompt)}
+                className="px-3 py-1.5 rounded-full text-xs font-medium border border-border bg-accent/50 text-accent-foreground hover:bg-accent hover:border-primary/30 transition-all duration-200"
+              >
+                {chip.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       {messages.map((message: Message, index: number) => (
         <div
           className={`flex flex-col px-4 shadow-sm whitespace-pre-wrap ${message.role !== 'user' ? 'bg-accent dark:bg-white/5 border text-accent-foreground dark:text-muted-foreground py-4 rounded-2xl gap-4 w-full' : 'bg-gradient-to-b from-black/5 to-black/10 dark:from-black/30 dark:to-black/50 py-2 rounded-xl gap-2 w-fit'} font-serif`}
@@ -49,7 +81,7 @@ export function Chat({
               )
             }
           })}
-          {message.object && (
+          {message.object && !isResumeMode && (
             <div
               onClick={() =>
                 setCurrentPreview({

@@ -27,6 +27,7 @@ export function ChatInput({
   files,
   handleFileChange,
   children,
+  isResumeMode,
 }: {
   retry: () => void
   isErrored: boolean
@@ -41,6 +42,7 @@ export function ChatInput({
   files: File[]
   handleFileChange: (change: SetStateAction<File[]>) => void
   children: React.ReactNode
+  isResumeMode?: boolean
 }) {
   function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
     handleFileChange((prev) => {
@@ -173,7 +175,9 @@ export function ChatInput({
         </div>
       )}
       <div className="relative">
-        <RepoBanner className="absolute bottom-full inset-x-2 translate-y-1 z-0 pb-2" />
+        {!isResumeMode && (
+          <RepoBanner className="absolute bottom-full inset-x-2 translate-y-1 z-0 pb-2" />
+        )}
         <div
           className={`shadow-md rounded-2xl relative z-10 bg-background border ${
             dragActive
@@ -188,7 +192,7 @@ export function ChatInput({
             maxRows={5}
             className="text-normal px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none"
             required={true}
-            placeholder="Describe your app..."
+            placeholder={isResumeMode ? "Ask about experience, skills, or projects..." : "Describe your app..."}
             disabled={isErrored}
             value={input}
             onChange={handleInputChange}
@@ -270,9 +274,9 @@ export function ChatInput({
         </div>
       </div>
       <p className="text-xs text-muted-foreground mt-2 text-center">
-        Fragments is an open-source project made by{' '}
-        <a href="https://e2b.dev" target="_blank" className="text-[#ff8800]">
-          ✶ E2B
+        Built by{' '}
+        <a href="https://khiw.dev" target="_blank" className="text-primary">
+          khiw.dev
         </a>
       </p>
     </form>

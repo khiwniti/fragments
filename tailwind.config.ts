@@ -18,6 +18,10 @@ const config = {
       },
     },
     extend: {
+      fontFamily: {
+        sans: ['var(--font-sans)', 'Quicksand', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'JetBrains Mono', 'Geist Mono', 'monospace'],
+      },
       colors: {
         border: 'hsl(var(--border))',
         input: 'hsl(var(--input))',
@@ -59,6 +63,11 @@ const config = {
           '4': 'hsl(var(--chart-4))',
           '5': 'hsl(var(--chart-5))',
         },
+        emerald: {
+          400: '#34d399',
+          dim: 'rgba(52, 211, 153, 0.5)',
+          surface: 'rgba(52, 211, 153, 0.05)',
+        },
       },
       borderRadius: {
         lg: 'var(--radius)',
@@ -82,10 +91,44 @@ const config = {
             height: '0',
           },
         },
+        'slide-up': {
+          from: { opacity: '0', transform: 'translateY(24px)' },
+          to: { opacity: '1', transform: 'none' },
+        },
+        'fade-in': {
+          from: { opacity: '0' },
+          to: { opacity: '1' },
+        },
+        'expand-in': {
+          from: { opacity: '0', transform: 'scale(0.97)' },
+          to: { opacity: '1', transform: 'none' },
+        },
+        'slide-in-right': {
+          from: { opacity: '0', transform: 'translateX(30px)' },
+          to: { opacity: '1', transform: 'none' },
+        },
+        shimmer: {
+          '0%': { backgroundPosition: '-200% 0' },
+          '100%': { backgroundPosition: '200% 0' },
+        },
+        'pulse-glow': {
+          '0%, 100%': { opacity: '1' },
+          '50%': { opacity: '0.3' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
         'accordion-up': 'accordion-up 0.2s ease-out',
+        'slide-up': 'slide-up 0.6s cubic-bezier(0.22,1,0.36,1) both',
+        'fade-in': 'fade-in 0.18s ease-out',
+        'expand-in': 'expand-in 0.22s cubic-bezier(0.22,1,0.36,1)',
+        'slide-in-right': 'slide-in-right 0.55s cubic-bezier(0.22,1,0.36,1) both',
+        shimmer: 'shimmer 1.4s infinite linear',
+        'pulse-glow': 'pulse-glow 2s infinite',
+      },
+      backgroundImage: {
+        shimmer:
+          'linear-gradient(90deg, hsl(var(--border)) 0%, hsl(var(--primary)) 50%, hsl(var(--border)) 100%)',
       },
     },
   },

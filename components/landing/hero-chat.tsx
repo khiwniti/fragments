@@ -21,8 +21,8 @@ import {
 const MODELS: LLMModel[] = modelsData.models as LLMModel[]
 
 const DEFAULT_MODEL: LLMModel = {
-  id: 'meta/llama-3.3-70b-instruct',
-  name: 'Llama 3.3 70B',
+  id: 'meta/llama-3.1-70b-instruct',
+  name: 'Llama 3.1 70B',
   provider: 'NVIDIA',
   providerId: 'nvidia',
 }

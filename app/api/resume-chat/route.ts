@@ -17,10 +17,10 @@ export async function POST(req: Request) {
     config?: LLMModelConfig
   } = await req.json()
 
-  // Default to Llama 3.3 70B via NVIDIA NIM if no model specified
+  // Default to Llama 3.1 70B via NVIDIA NIM if no model specified
   const activeModel: LLMModel = model || {
-    id: 'meta/llama-3.3-70b-instruct',
-    name: 'Llama 3.3 70B',
+    id: 'meta/llama-3.1-70b-instruct',
+    name: 'Llama 3.1 70B',
     provider: 'NVIDIA',
     providerId: 'nvidia',
   }

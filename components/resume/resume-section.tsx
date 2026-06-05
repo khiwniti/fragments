@@ -1,17 +1,24 @@
 'use client'
 
 import { ResumeSectionSchema } from '@/lib/schema'
+import { DeepPartial } from 'ai'
 import { Badge } from '@/components/ui/badge'
 import { ExternalLink } from 'lucide-react'
 
-export function ResumeSection({ section }: { section: ResumeSectionSchema }) {
+export function ResumeSection({
+  section,
+}: {
+  section: DeepPartial<ResumeSectionSchema>
+}) {
   return (
     <section className="space-y-3">
       <h2 className="text-lg font-semibold text-primary tracking-tight border-b border-border pb-1">
         {section.title}
       </h2>
       <div className="space-y-3">
-        {section.items.map((item, idx) => (
+        {(section.items ?? [])
+          .filter((item): item is NonNullable<typeof item> => !!item)
+          .map((item, idx) => (
           <div key={idx} className="group">
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1 min-w-0">

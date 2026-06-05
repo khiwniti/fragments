@@ -1,5 +1,6 @@
 import type { ResumeContentSchema } from '@/lib/schema'
 import type { Message } from '@/lib/messages'
+import type { DeepPartial } from 'ai'
 
 // ── Types ──────────────────────────────────────────────────────────────────
 
@@ -9,7 +10,7 @@ export interface SavedSession {
   createdAt: number
   updatedAt: number
   messages: Message[]
-  resumeContent?: ResumeContentSchema
+  resumeContent?: DeepPartial<ResumeContentSchema>
 }
 
 // ── Keys ───────────────────────────────────────────────────────────────────
@@ -60,7 +61,7 @@ function inferTitle(messages: Message[]): string {
 
 export function createSession(
   messages: Message[],
-  resumeContent?: ResumeContentSchema,
+  resumeContent?: DeepPartial<ResumeContentSchema>,
 ): SavedSession {
   const id = crypto.randomUUID()
   const now = Date.now()
@@ -136,7 +137,7 @@ export function clearActiveSessionId() {
  */
 export function persistSession(
   messages: Message[],
-  resumeContent?: ResumeContentSchema,
+  resumeContent?: DeepPartial<ResumeContentSchema>,
 ): SavedSession {
   const activeId = getActiveSessionId()
 

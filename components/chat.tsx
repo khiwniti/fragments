@@ -1,8 +1,8 @@
 import { Message } from '@/lib/messages'
-import { FragmentSchema } from '@/lib/schema'
+import { FragmentSchema, ResumeContentSchema } from '@/lib/schema'
 import { ExecutionResult } from '@/lib/types'
 import { DeepPartial } from 'ai'
-import { LoaderIcon, Terminal } from 'lucide-react'
+import { LoaderIcon, Terminal, FileText, PanelRight } from 'lucide-react'
 import { useEffect } from 'react'
 import { StarterChip } from '@/lib/profile'
 
@@ -13,6 +13,8 @@ export function Chat({
   isResumeMode,
   starterChips,
   onChipClick,
+  resumeContent,
+  onOpenArtifact,
 }: {
   messages: Message[]
   isLoading: boolean
@@ -23,6 +25,8 @@ export function Chat({
   isResumeMode?: boolean
   starterChips?: StarterChip[]
   onChipClick?: (prompt: string) => void
+  resumeContent?: DeepPartial<ResumeContentSchema>
+  onOpenArtifact?: () => void
 }) {
   useEffect(() => {
     const chatContainer = document.getElementById('chat-container')
@@ -39,23 +43,24 @@ export function Chat({
       className="flex flex-col pb-12 gap-2 overflow-y-auto max-h-full"
     >
       {showChips && starterChips && (
-        <div className="px-4 py-6 space-y-4">
-          <div className="text-center space-y-1">
-            <p className="text-sm text-muted-foreground">
-              Ask about Khiw's experience, projects, or skills.
-            </p>
-            <p className="text-xs text-muted-foreground/60">
-              The resume on the right will adapt to your question.
+        <div className="flex-1 flex flex-col items-center justify-center min-h-[40vh] px-4 animate-in fade-in duration-500">
+          <div className="text-center space-y-4 mb-10 max-w-lg">
+            <h1 className="font-bold leading-[1.1] tracking-tight" style={{ fontSize: 'clamp(24px,4vw,38px)' }}>
+              Ask me anything
+            </h1>
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              Hi, I&apos;m Ikkyu — an AI-Augmented Full-Stack Developer.
+              Ask about my experience, projects, or skills below.
             </p>
           </div>
-          <div className="flex flex-wrap justify-center gap-2">
+          <div className="flex flex-wrap justify-center gap-2.5 max-w-[520px]">
             {starterChips.map((chip) => (
               <button
                 key={chip.label}
                 onClick={() => onChipClick?.(chip.prompt)}
-                className="px-3 py-1.5 rounded-full text-xs font-medium border border-border bg-accent/50 text-accent-foreground hover:bg-accent hover:border-primary/30 transition-all duration-200"
+                className="group relative px-4 py-2 rounded-full text-xs font-medium border border-border/60 bg-accent/30 text-accent-foreground hover:bg-accent hover:border-primary/40 hover:text-foreground transition-all duration-200 active:scale-[0.97]"
               >
-                {chip.label}
+                <span className="relative z-10">{chip.label}</span>
               </button>
             ))}
           </div>
@@ -103,6 +108,29 @@ export function Chat({
                 </span>
               </div>
             </div>
+          )}
+
+          {/* Resume mode artifact card */}
+          {isResumeMode && resumeContent?.sections && resumeContent.sections.length > 0 && index === messages.length - 1 && (
+            <button
+              onClick={onOpenArtifact}
+              className="mt-3 w-full md:w-max flex items-center gap-2.5 rounded-xl border border-border/50 bg-background/50 px-3 py-2 text-left hover:bg-accent/30 hover:border-primary/30 transition-all duration-200 group"
+            >
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                <FileText className="w-4 h-4 text-primary/70" />
+              </div>
+              <div className="flex flex-col min-w-0">
+                <span className="text-xs font-semibold text-foreground">
+                  {resumeContent.focus || 'Resume View'}
+                </span>
+                <span className="text-[10px] text-muted-foreground/50">
+                  {resumeContent.sections.length} sections &middot; Click to expand
+                </span>
+              </div>
+              <div className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors">
+                <PanelRight className="w-3 h-3" />
+              </div>
+            </button>
           )}
         </div>
       ))}

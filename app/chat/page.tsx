@@ -51,7 +51,7 @@ function ChatPageInner() {
   })
   const [messages, setMessages] = useState<Message[]>([])
   const [fragment, setFragment] = useState<DeepPartial<FragmentSchema>>()
-  const [resumeContent, setResumeContent] = useState<ResumeContentSchema>()
+  const [resumeContent, setResumeContent] = useState<DeepPartial<ResumeContentSchema>>()
   const [currentTab, setCurrentTab] = useState<'code' | 'fragment'>('code')
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [conversations, setConversations] = useState<SavedSession[]>([])
@@ -179,9 +179,9 @@ function ChatPageInner() {
   useEffect(() => {
     if (object) {
       if (isResumeMode) {
-        const resumeObj = object as ResumeContentSchema
+        const resumeObj = object as DeepPartial<ResumeContentSchema>
         setResumeContent(resumeObj)
-        if (!showArtifactPanel && resumeObj.sections?.length > 0) {
+        if (!showArtifactPanel && (resumeObj.sections?.length ?? 0) > 0) {
           setShowArtifactPanel(true)
         }
         const content: Message['content'] = [

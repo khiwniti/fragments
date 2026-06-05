@@ -1,6 +1,7 @@
 'use client'
 
 import { ResumeContentSchema } from '@/lib/schema'
+import { DeepPartial } from 'ai'
 import { profile } from '@/lib/profile'
 import { ResumeSection } from './resume/resume-section'
 import { MapPin, Mail, Phone, Globe, Github, Linkedin, Printer } from 'lucide-react'
@@ -35,7 +36,7 @@ export function ResumeArtifact({
   content,
   isLoading,
 }: {
-  content?: ResumeContentSchema
+  content?: DeepPartial<ResumeContentSchema>
   isLoading?: boolean
 }) {
   const handlePrint = useCallback(() => {
@@ -119,9 +120,11 @@ export function ResumeArtifact({
           <ResumeSkeleton />
         ) : content && content.sections && content.sections.length > 0 ? (
           <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {content.sections.map((section, i) => (
-              <ResumeSection key={`${section.type}-${i}`} section={section} />
-            ))}
+            {content.sections
+              .filter((section) => section?.items?.length)
+              .map((section, i) => (
+                <ResumeSection key={`${section!.type}-${i}`} section={section!} />
+              ))}
           </div>
         ) : (
           <div className="text-center text-muted-foreground py-12">

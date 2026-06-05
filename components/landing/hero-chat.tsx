@@ -8,7 +8,7 @@ import { starterChips } from '@/lib/profile'
 import { ResumeArtifactPanel } from '@/components/landing/resume-artifact-panel'
 import { LLMModel } from '@/lib/models'
 import modelsData from '@/lib/models.json'
-import { ArrowUp, LoaderIcon, Square, Sparkles, FileText, PanelRight } from 'lucide-react'
+import { ArrowUp, LoaderIcon, Square, Sparkles, FileText, PanelRight, Clock, Trash2, Plus } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -18,6 +18,18 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import {
+  getOrCreateAnonId,
+  getActiveSessionId,
+  persistSession,
+  restoreActiveSession,
+  startNewSession,
+  listSessions,
+  loadSession,
+  saveActiveSessionId,
+  deleteSession,
+  type SavedSession,
+} from '@/lib/storage'
 
 const MODELS: LLMModel[] = modelsData.models as LLMModel[]
 
@@ -35,8 +47,12 @@ export function HeroChat() {
   const [isSessionActive, setIsSessionActive] = useState(false)
   const [resumeContent, setResumeContent] = useState<ResumeContentSchema | undefined>(undefined)
   const [showArtifactPanel, setShowArtifactPanel] = useState(false)
+  const [sessions, setSessions] = useState<SavedSession[]>([])
+  const [showSessions, setShowSessions] = useState(false)
+  const sessionsRef = useRef<HTMLDivElement>(null)
   const chatRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
+  const isRestoring = useRef(true)
 
   const { object, submit, isLoading, stop, error } = useObject({
     api: '/api/resume-chat',
@@ -45,6 +61,47 @@ export function HeroChat() {
       console.error('Hero chat error:', err)
     },
   })
+
+  // ── Restore session on mount ──────────────────────────────────────────
+  useEffect(() => {
+    getOrCreateAnonId() // ensure anon ID exists
+    const saved = restoreActiveSession()
+    if (saved) {
+      setMessages(saved.messages)
+      if (saved.resumeContent) {
+        setResumeContent(saved.resumeContent)
+        if (saved.messages.length > 0) {
+          setIsSessionActive(true)
+        }
+      }
+    }
+    setSessions(listSessions())
+    isRestoring.current = false
+  }, [])
+
+  // ── Persist on every message/resume change (debounced when streaming) ─
+  useEffect(() => {
+    if (isRestoring.current) return
+    if (messages.length === 0) return
+    const timer = setTimeout(() => {
+      persistSession(messages, resumeContent)
+      setSessions(listSessions())
+    }, isLoading ? 800 : 0)
+    return () => clearTimeout(timer)
+  }, [messages, resumeContent, isLoading])
+
+  // ── Close sessions dropdown on click outside ──────────────────────────
+  useEffect(() => {
+    function handleClick(e: MouseEvent) {
+      if (sessionsRef.current && !sessionsRef.current.contains(e.target as Node)) {
+        setShowSessions(false)
+      }
+    }
+    if (showSessions) {
+      document.addEventListener('mousedown', handleClick)
+      return () => document.removeEventListener('mousedown', handleClick)
+    }
+  }, [showSessions])
 
   useEffect(() => {
     if (object) {
@@ -92,7 +149,6 @@ export function HeroChat() {
     }
     const updatedMessages = [...messages, newMessage]
     setMessages(updatedMessages)
-    setResumeContent(undefined) // clear stale artifact while loading
     if (!isSessionActive) setIsSessionActive(true)
     sendMessages(updatedMessages)
     setInput('')
@@ -106,7 +162,6 @@ export function HeroChat() {
     }
     const updatedMessages = [...messages, newMessage]
     setMessages(updatedMessages)
-    setResumeContent(undefined) // clear stale artifact while loading
     if (!isSessionActive) setIsSessionActive(true)
     sendMessages(updatedMessages)
   }
@@ -163,17 +218,100 @@ export function HeroChat() {
             </span>
           </div>
           <div className="flex items-center gap-2">
+            {/* Sessions history */}
+            <div ref={sessionsRef} className="relative">
+              <button
+                onClick={() => setShowSessions(!showSessions)}
+                className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50"
+                title="Chat history"
+              >
+                <Clock className="w-3 h-3" />
+                <span className="hidden md:inline">History</span>
+              </button>
+
+              {showSessions && (
+                <div className="absolute right-0 top-full mt-1 w-72 max-h-[320px] overflow-y-auto rounded-xl border border-border/50 bg-popover shadow-lg z-50 animate-in fade-in slide-in-from-top-2 duration-200">
+                  <div className="p-2 border-b border-border/20 flex items-center justify-between">
+                    <span className="text-[10px] font-medium text-muted-foreground/60 uppercase tracking-wider px-2">
+                      Chat history
+                    </span>
+                    <span className="text-[10px] text-muted-foreground/40">
+                      {sessions.length} session{sessions.length !== 1 ? 's' : ''}
+                    </span>
+                  </div>
+                  {sessions.length === 0 ? (
+                    <div className="px-4 py-6 text-center">
+                      <p className="text-[11px] text-muted-foreground/50">No saved sessions yet</p>
+                      <p className="text-[10px] text-muted-foreground/40 mt-1">Chats are saved automatically</p>
+                    </div>
+                  ) : (
+                    <div className="py-1">
+                      {sessions.map((s) => (
+                        <button
+                          key={s.id}
+                          onClick={() => {
+                            const restored = loadSession(s.id)
+                            if (restored) {
+                              saveActiveSessionId(restored.id)
+                              setMessages(restored.messages)
+                              setResumeContent(restored.resumeContent)
+                              if (restored.messages.length > 0) setIsSessionActive(true)
+                              if (restored.resumeContent) setShowArtifactPanel(true)
+                              setShowSessions(false)
+                            }
+                          }}
+                          className="w-full text-left px-3 py-2.5 hover:bg-accent/40 transition-colors rounded-md flex items-center gap-2 group"
+                        >
+                          <div className="w-5 h-5 rounded-md bg-primary/10 flex items-center justify-center shrink-0">
+                            <FileText className="w-2.5 h-2.5 text-primary/60" />
+                          </div>
+                          <div className="flex-1 min-w-0">
+                            <p className="text-xs text-foreground/80 truncate">{s.title}</p>
+                            <p className="text-[10px] text-muted-foreground/40">
+                              {s.messages.length} message{s.messages.length !== 1 ? 's' : ''}
+                              {s.resumeContent ? ' · has resume' : ''}
+                            </p>
+                          </div>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation()
+                              deleteSession(s.id)
+                              setSessions(listSessions())
+                              if (getActiveSessionId() === s.id) {
+                                startNewSession()
+                                setMessages([])
+                                setIsSessionActive(false)
+                                setResumeContent(undefined)
+                                setShowArtifactPanel(false)
+                              }
+                            }}
+                            className="opacity-0 group-hover:opacity-100 text-muted-foreground/30 hover:text-red-400 transition-all p-1 rounded"
+                            title="Delete session"
+                          >
+                            <Trash2 className="w-3 h-3" />
+                          </button>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* New chat */}
             {isSessionActive && messages.length > 0 && (
               <button
                 onClick={() => {
+                  startNewSession()
                   setMessages([])
                   setIsSessionActive(false)
                   setResumeContent(undefined)
                   setShowArtifactPanel(false)
                 }}
-                className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50"
+                className="flex items-center gap-1 text-xs text-muted-foreground/60 hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50"
               >
-                New chat
+                <Plus className="w-3 h-3" />
+                <span className="hidden md:inline">New chat</span>
               </button>
             )}
           </div>

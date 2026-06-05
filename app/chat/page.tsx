@@ -2,18 +2,20 @@
 
 export const dynamic = 'force-dynamic'
 
-import { useState, useEffect, useCallback } from 'react'
+import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { useSearchParams } from 'next/navigation'
 import { Chat } from '@/components/chat'
 import { ChatInput } from '@/components/chat-input'
 import { Preview } from '@/components/preview'
-import { ResumeArtifact } from '@/components/resume-artifact'
+import { ResumeArtifactPanel } from '@/components/landing/resume-artifact-panel'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth'
 import { Message, toAISDKMessages, toMessageImage } from '@/lib/messages'
 import { LLMModelConfig } from '@/lib/models'
 import modelsList from '@/lib/models.json'
 import { FragmentSchema, fragmentSchema, ResumeContentSchema, resumeContentSchema } from '@/lib/schema'
+import { starterChips } from '@/lib/profile'
 import { ExecutionResult } from '@/lib/types'
 import { DeepPartial } from 'ai'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
@@ -34,6 +36,14 @@ import {
 const isResumeMode = process.env.NEXT_PUBLIC_RESUME_MODE !== 'false'
 
 export default function ChatPage() {
+  return (
+    <Suspense fallback={<div className="h-screen bg-background flex items-center justify-center"><p className="text-sm text-muted-foreground">Loading...</p></div>}>
+      <ChatPageInner />
+    </Suspense>
+  )
+}
+
+function ChatPageInner() {
   const [chatInput, setChatInput] = useLocalStorage('chat', '')
   const [files, setFiles] = useState<File[]>([])
   const [languageModel, setLanguageModel] = useLocalStorage<LLMModelConfig>('languageModel', {
@@ -47,6 +57,7 @@ export default function ChatPage() {
   const [conversations, setConversations] = useState<SavedSession[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
+  const [showArtifactPanel, setShowArtifactPanel] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const { session, userTeam } = useAuth(() => {}, () => {})
 
@@ -73,11 +84,52 @@ export default function ChatPage() {
       setMessages(saved.messages)
       if (saved.resumeContent) {
         setResumeContent(saved.resumeContent)
+        setShowArtifactPanel(true)
       }
       setCurrentConversationId(saved.id)
     }
     setConversations(listSessions())
   }, [])
+
+  // ── Read ?prompt= from URL and auto-submit after restore ──────────────
+  const searchParams = useSearchParams()
+  const promptSubmitted = useRef(false)
+
+  useEffect(() => {
+    const prompt = searchParams.get('prompt')
+    if (!prompt || promptSubmitted.current) return
+    if (messages.length > 0) return // don't override existing session
+
+    promptSubmitted.current = true
+    setChatInput(prompt)
+
+    // Auto-submit after a brief delay to let the UI settle
+    const timer = setTimeout(() => {
+      const newMessage: Message = {
+        role: 'user',
+        content: [{ type: 'text', text: prompt }],
+      }
+      const updatedMessages = [newMessage]
+      setMessages(updatedMessages)
+
+      const payload: Record<string, unknown> = {
+        userID: session?.user?.id,
+        teamID: userTeam?.id,
+        messages: toAISDKMessages(updatedMessages),
+        model: currentModel,
+        config: languageModel,
+      }
+
+      if (!isResumeMode) {
+        payload.template = { auto: {} }
+      }
+
+      submit(payload)
+      setChatInput('')
+    }, 100)
+
+    return () => clearTimeout(timer)
+  }, [searchParams, messages.length])
 
   // ── Auto-persist session when messages change ─────────────────────────
   useEffect(() => {
@@ -127,9 +179,13 @@ export default function ChatPage() {
   useEffect(() => {
     if (object) {
       if (isResumeMode) {
-        setResumeContent(object as ResumeContentSchema)
+        const resumeObj = object as ResumeContentSchema
+        setResumeContent(resumeObj)
+        if (!showArtifactPanel && resumeObj.sections?.length > 0) {
+          setShowArtifactPanel(true)
+        }
         const content: Message['content'] = [
-          { type: 'text', text: (object as ResumeContentSchema).commentary || '' },
+          { type: 'text', text: resumeObj.commentary || '' },
         ]
         updateMessagesWithObject(content, object)
       } else {
@@ -202,6 +258,7 @@ export default function ChatPage() {
     setChatInput('')
     setFiles([])
     setCurrentConversationId(null)
+    setShowArtifactPanel(false)
   }
 
   function handleSelectConversation(conv: SavedSession) {
@@ -224,6 +281,32 @@ export default function ChatPage() {
     }
   }
 
+  function handleChipClick(prompt: string) {
+    if (isLoading) return
+    const newMessage: Message = {
+      role: 'user',
+      content: [{ type: 'text', text: prompt }],
+    }
+    const updatedMessages = [...messages, newMessage]
+    setMessages(updatedMessages)
+
+    const payload: Record<string, unknown> = {
+      userID: session?.user?.id,
+      teamID: userTeam?.id,
+      messages: toAISDKMessages(updatedMessages),
+      model: currentModel,
+      config: languageModel,
+    }
+
+    if (!isResumeMode) {
+      payload.template = { auto: {} }
+    }
+
+    submit(payload)
+    setChatInput('')
+    setFiles([])
+  }
+
   function handleInputChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setChatInput(e.target.value)
   }
@@ -240,7 +323,7 @@ export default function ChatPage() {
     setResult(preview.result)
   }
 
-  const showRightPanel = isResumeMode ? messages.length > 0 : !!fragment
+  const showRightPanel = isResumeMode ? (showArtifactPanel && resumeContent?.sections && resumeContent.sections.length > 0) : !!fragment
 
   return (
     <main className="flex h-screen bg-background">
@@ -330,6 +413,10 @@ export default function ChatPage() {
               isLoading={isLoading}
               setCurrentPreview={setCurrentPreview}
               isResumeMode={isResumeMode}
+              starterChips={isResumeMode ? starterChips : undefined}
+              onChipClick={handleChipClick}
+              resumeContent={resumeContent}
+              onOpenArtifact={() => setShowArtifactPanel(true)}
             />
             <ChatInput
               retry={() => submit({})}
@@ -356,9 +443,12 @@ export default function ChatPage() {
 
           {showRightPanel && (
             <div className="w-[480px] border-l border-border animate-slide-in-right flex-shrink-0">
-              {isResumeMode ? (
-                <ResumeArtifact content={resumeContent} isLoading={isLoading} />
-              ) : (
+              {isResumeMode && resumeContent ? (
+                <ResumeArtifactPanel
+                  content={resumeContent}
+                  onClose={() => setShowArtifactPanel(false)}
+                />
+              ) : !isResumeMode ? (
                 <Preview
                   teamID={userTeam?.id}
                   accessToken={session?.access_token}
@@ -370,7 +460,7 @@ export default function ChatPage() {
                   result={result as ExecutionResult}
                   onClose={() => setFragment(undefined)}
                 />
-              )}
+              ) : null}
             </div>
           )}
         </div>

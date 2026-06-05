@@ -2,12 +2,13 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
-import { resumeContentSchema, type ResumeContentSchema, ResumeSectionSchema } from '@/lib/schema'
+import { resumeContentSchema, type ResumeContentSchema } from '@/lib/schema'
 import { Message, toAISDKMessages } from '@/lib/messages'
 import { starterChips } from '@/lib/profile'
-import { LLMModel, LLMModelConfig } from '@/lib/models'
+import { ResumeArtifactPanel } from '@/components/landing/resume-artifact-panel'
+import { LLMModel } from '@/lib/models'
 import modelsData from '@/lib/models.json'
-import { ArrowUp, LoaderIcon, Square, Sparkles, ExternalLink, FileText } from 'lucide-react'
+import { ArrowUp, LoaderIcon, Square, Sparkles, FileText, PanelRight } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -33,7 +34,7 @@ export function HeroChat() {
   const [selectedModel, setSelectedModel] = useState<LLMModel>(DEFAULT_MODEL)
   const [isSessionActive, setIsSessionActive] = useState(false)
   const [resumeContent, setResumeContent] = useState<ResumeContentSchema | undefined>(undefined)
-  const [expandedSection, setExpandedSection] = useState<string | null>(null)
+  const [showArtifactPanel, setShowArtifactPanel] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -49,10 +50,8 @@ export function HeroChat() {
     if (object) {
       const resumeObj = object as ResumeContentSchema
       setResumeContent(resumeObj)
-      // Auto-expand first section when new artifact arrives
-      if (resumeObj.sections && resumeObj.sections.length > 0) {
-        setExpandedSection(`${resumeObj.sections[0].type}-0`)
-      }
+      // Auto-open artifact panel when new response arrives
+      if (!showArtifactPanel) setShowArtifactPanel(true)
       const content: Message['content'] = [
         { type: 'text', text: resumeObj.commentary || '' },
       ]
@@ -138,17 +137,23 @@ export function HeroChat() {
     {} as Record<string, LLMModel[]>,
   )
 
+  const panelOpen = showArtifactPanel && resumeContent?.sections && resumeContent.sections.length > 0
+
   return (
-    <section className="relative min-h-screen flex flex-col">
-      {/* Subtle gradient background */}
-      <div className="absolute inset-0 pointer-events-none">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full opacity-[0.015] dark:opacity-[0.03]"
-          style={{ background: 'radial-gradient(ellipse at center, currentColor 0%, transparent 70%)' }}
-        />
-      </div>
+    <div className={`${panelOpen ? 'grid md:grid-cols-2' : ''} min-h-screen bg-background`}>
+      {/* Left column: Chat */}
+      <div className={`flex flex-col ${panelOpen ? 'h-screen overflow-hidden max-w-full border-r border-border/20' : 'min-h-screen max-w-[720px] mx-auto w-full relative'}`}>
+      {/* Subtle gradient background - only when full width */}
+      {!panelOpen && (
+        <div className="absolute inset-0 pointer-events-none">
+          <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full opacity-[0.015] dark:opacity-[0.03]"
+            style={{ background: 'radial-gradient(ellipse at center, currentColor 0%, transparent 70%)' }}
+          />
+        </div>
+      )}
 
       {/* Chat container - flex column so input stays at bottom */}
-      <div className="flex-1 flex flex-col max-w-[720px] mx-auto w-full px-4 md:px-6 relative z-10">
+      <div className="flex-1 flex flex-col w-full px-4 md:px-6 relative z-10">
         {/* Header area */}
         <div className="pt-6 pb-2 flex items-center justify-between">
           <div className="flex items-center gap-2">
@@ -164,7 +169,7 @@ export function HeroChat() {
                   setMessages([])
                   setIsSessionActive(false)
                   setResumeContent(undefined)
-                  setExpandedSection(null)
+                  setShowArtifactPanel(false)
                 }}
                 className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50"
               >
@@ -227,32 +232,27 @@ export function HeroChat() {
                       return null
                     })}
 
-                    {/* Render resume sections artifact below the commentary */}
+                    {/* Clickable artifact card - opens the right panel */}
                     {message.role === 'assistant' && resumeContent?.sections && resumeContent.sections.length > 0 && index === messages.length - 1 && (
-                      <div className="mt-4 pt-3 border-t border-border/30">
-                        <div className="flex items-center gap-2 mb-3">
-                          <FileText className="w-3.5 h-3.5 text-primary/60" />
-                          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
-                            Resume Artifact
+                      <button
+                        onClick={() => setShowArtifactPanel(true)}
+                        className="mt-3 w-full md:w-max flex items-center gap-2.5 rounded-xl border border-border/50 bg-background/50 px-3 py-2 text-left hover:bg-accent/30 hover:border-primary/30 transition-all duration-200 group"
+                      >
+                        <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0 group-hover:bg-primary/15 transition-colors">
+                          <FileText className="w-4 h-4 text-primary/70" />
+                        </div>
+                        <div className="flex flex-col min-w-0">
+                          <span className="text-xs font-semibold text-foreground">
+                            {resumeContent.focus || 'Resume View'}
+                          </span>
+                          <span className="text-[10px] text-muted-foreground/50">
+                            {resumeContent.sections.length} sections · Click to expand
                           </span>
                         </div>
-                        <div className="space-y-2">
-                          {resumeContent.sections.map((section, idx) => (
-                            <SectionCard
-                              key={`${section.type}-${idx}`}
-                              section={section}
-                              isExpanded={expandedSection === `${section.type}-${idx}`}
-                              onToggle={() =>
-                                setExpandedSection(
-                                  expandedSection === `${section.type}-${idx}`
-                                    ? null
-                                    : `${section.type}-${idx}`,
-                                )
-                              }
-                            />
-                          ))}
+                        <div className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors">
+                          <PanelRight className="w-3 h-3" />
                         </div>
-                      </div>
+                      </button>
                     )}
                   </div>
                 </div>
@@ -350,83 +350,25 @@ export function HeroChat() {
           </p>
         </div>
       </div>
-    </section>
-  )
-}
+      </div>
 
-// ── SectionCard: renders a single resume section as a compact artifact card ──
+      {/* Right column: Desktop artifact panel */}
+      {panelOpen && (
+        <div className="hidden md:flex h-screen overflow-hidden">
+          <ResumeArtifactPanel
+            content={resumeContent!}
+            onClose={() => setShowArtifactPanel(false)}
+          />
+        </div>
+      )}
 
-function SectionCard({
-  section,
-  isExpanded,
-  onToggle,
-}: {
-  section: ResumeSectionSchema
-  isExpanded: boolean
-  onToggle: () => void
-}) {
-  return (
-    <div className="rounded-xl border border-border/50 bg-background/50 overflow-hidden transition-all duration-200">
-      <button
-        onClick={onToggle}
-        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-accent/30 transition-colors"
-      >
-        <span className="text-xs font-medium text-foreground">
-          {section.title}
-        </span>
-        <svg
-          className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${
-            isExpanded ? 'rotate-180' : ''
-          }`}
-          viewBox="0 0 24 24"
-          fill="none"
-          stroke="currentColor"
-          strokeWidth="2"
-          strokeLinecap="round"
-          strokeLinejoin="round"
-        >
-          <path d="m6 9 6 6 6-6" />
-        </svg>
-      </button>
-      {isExpanded && (
-        <div className="px-3 pb-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-          {(section.items || []).map((item, idx) => (
-            <div key={idx} className="text-xs text-muted-foreground space-y-0.5">
-              <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-medium text-foreground">
-                  {item.label}
-                </span>
-                {item.tags?.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex px-1.5 py-0.5 rounded-full bg-accent/50 text-[9px] font-medium text-muted-foreground"
-                  >
-                    {tag}
-                  </span>
-                ))}
-                {item.url && (
-                  <a
-                    href={item.url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="text-muted-foreground/60 hover:text-primary transition-colors ml-auto"
-                  >
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
-                )}
-              </div>
-              {item.value && (
-                <p className="text-[11px] text-muted-foreground/70">
-                  {item.value}
-                </p>
-              )}
-              {item.detail && (
-                <p className="text-xs text-muted-foreground/60 leading-relaxed mt-0.5">
-                  {item.detail}
-                </p>
-              )}
-            </div>
-          ))}
+      {/* Mobile overlay for artifact panel */}
+      {panelOpen && (
+        <div className="fixed inset-0 z-50 md:hidden bg-background animate-fade-in">
+          <ResumeArtifactPanel
+            content={resumeContent!}
+            onClose={() => setShowArtifactPanel(false)}
+          />
         </div>
       )}
     </div>

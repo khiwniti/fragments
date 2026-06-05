@@ -19,15 +19,19 @@ import { DeepPartial } from 'ai'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
 import { useLocalStorage } from 'usehooks-ts'
 import { MessageSquare, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
+import {
+  getOrCreateAnonId,
+  persistSession,
+  restoreActiveSession,
+  loadSession,
+  saveActiveSessionId,
+  startNewSession,
+  listSessions,
+  deleteSession,
+  type SavedSession,
+} from '@/lib/storage'
 
 const isResumeMode = process.env.NEXT_PUBLIC_RESUME_MODE !== 'false'
-
-interface Conversation {
-  id: string
-  title: string
-  messages: Message[]
-  updatedAt: string
-}
 
 export default function ChatPage() {
   const [chatInput, setChatInput] = useLocalStorage('chat', '')
@@ -40,7 +44,7 @@ export default function ChatPage() {
   const [resumeContent, setResumeContent] = useState<ResumeContentSchema>()
   const [currentTab, setCurrentTab] = useState<'code' | 'fragment'>('code')
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
-  const [conversations, setConversations] = useState<Conversation[]>([])
+  const [conversations, setConversations] = useState<SavedSession[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
   const [errorMessage, setErrorMessage] = useState('')
@@ -61,22 +65,30 @@ export default function ChatPage() {
     filteredModels.find((model) => model.id === languageModel.model) ||
     defaultModel
 
-  // Load conversations from localStorage
+  // ── Restore session on mount ──────────────────────────────────────────
   useEffect(() => {
-    const saved = localStorage.getItem('chat-conversations')
+    getOrCreateAnonId() // ensure anonymous UUID exists
+    const saved = restoreActiveSession()
     if (saved) {
-      try {
-        setConversations(JSON.parse(saved))
-      } catch {
-        // ignore
+      setMessages(saved.messages)
+      if (saved.resumeContent) {
+        setResumeContent(saved.resumeContent)
       }
+      setCurrentConversationId(saved.id)
     }
+    setConversations(listSessions())
   }, [])
 
-  // Save conversations
+  // ── Auto-persist session when messages change ─────────────────────────
   useEffect(() => {
-    localStorage.setItem('chat-conversations', JSON.stringify(conversations))
-  }, [conversations])
+    if (messages.length === 0) return
+    const timer = setTimeout(() => {
+      const saved = persistSession(messages, resumeContent)
+      setCurrentConversationId((prev) => prev || saved.id)
+      setConversations(listSessions())
+    }, 2000)
+    return () => clearTimeout(timer)
+  }, [messages, resumeContent])
 
   const apiEndpoint = isResumeMode ? '/api/resume-chat' : '/api/chat'
   const activeSchema = isResumeMode ? resumeContentSchema : fragmentSchema
@@ -181,6 +193,7 @@ export default function ChatPage() {
   }
 
   function handleNewConversation() {
+    startNewSession()
     setMessages([])
     setFragment(undefined)
     setResumeContent(undefined)
@@ -191,56 +204,25 @@ export default function ChatPage() {
     setCurrentConversationId(null)
   }
 
-  function handleSelectConversation(conv: Conversation) {
-    setCurrentConversationId(conv.id)
-    setMessages(conv.messages)
-    setFragment(undefined)
-    setResumeContent(undefined)
-    setResult(undefined)
+  function handleSelectConversation(conv: SavedSession) {
+    const restored = loadSession(conv.id)
+    if (restored) {
+      saveActiveSessionId(restored.id)
+      setCurrentConversationId(restored.id)
+      setMessages(restored.messages)
+      setResumeContent(restored.resumeContent)
+      setFragment(undefined)
+      setResult(undefined)
+    }
   }
 
   function handleDeleteConversation(id: string) {
-    setConversations((prev) => prev.filter((c) => c.id !== id))
+    deleteSession(id)
+    setConversations(listSessions())
     if (currentConversationId === id) {
       handleNewConversation()
     }
   }
-
-  function getFirstText(content: Message['content']): string {
-    for (const item of content) {
-      if (item.type === 'text' || item.type === 'code') {
-        return item.text
-      }
-    }
-    return ''
-  }
-
-  function handleSaveConversation() {
-    if (messages.length === 0) return
-    const title = getFirstText(messages[0].content).slice(0, 40) || 'Untitled'
-    const newConv: Conversation = {
-      id: currentConversationId || Date.now().toString(),
-      title,
-      messages: [...messages],
-      updatedAt: new Date().toISOString(),
-    }
-    setConversations((prev) => {
-      const existing = prev.find((c) => c.id === newConv.id)
-      if (existing) {
-        return prev.map((c) => (c.id === newConv.id ? newConv : c))
-      }
-      return [newConv, ...prev]
-    })
-    setCurrentConversationId(newConv.id)
-  }
-
-  // Auto-save conversation when messages change
-  useEffect(() => {
-    if (messages.length > 0) {
-      const timeout = setTimeout(handleSaveConversation, 2000)
-      return () => clearTimeout(timeout)
-    }
-  }, [messages])
 
   function handleInputChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     setChatInput(e.target.value)
@@ -292,6 +274,9 @@ export default function ChatPage() {
               >
                 <MessageSquare className="w-4 h-4 flex-shrink-0" />
                 <span className="truncate flex-1">{conv.title}</span>
+                {conv.resumeContent && (
+                  <span className="text-[9px] text-muted-foreground/40 font-mono">resume</span>
+                )}
                 <button
                   onClick={(e) => {
                     e.stopPropagation()

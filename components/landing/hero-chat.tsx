@@ -2,12 +2,12 @@
 
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
-import { resumeContentSchema, type ResumeContentSchema } from '@/lib/schema'
+import { resumeContentSchema, type ResumeContentSchema, ResumeSectionSchema } from '@/lib/schema'
 import { Message, toAISDKMessages } from '@/lib/messages'
 import { starterChips } from '@/lib/profile'
 import { LLMModel, LLMModelConfig } from '@/lib/models'
 import modelsData from '@/lib/models.json'
-import { ArrowUp, LoaderIcon, Square, Sparkles } from 'lucide-react'
+import { ArrowUp, LoaderIcon, Square, Sparkles, ExternalLink, FileText } from 'lucide-react'
 import {
   Select,
   SelectContent,
@@ -32,6 +32,8 @@ export function HeroChat() {
   const [input, setInput] = useState('')
   const [selectedModel, setSelectedModel] = useState<LLMModel>(DEFAULT_MODEL)
   const [isSessionActive, setIsSessionActive] = useState(false)
+  const [resumeContent, setResumeContent] = useState<ResumeContentSchema | undefined>(undefined)
+  const [expandedSection, setExpandedSection] = useState<string | null>(null)
   const chatRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -45,8 +47,14 @@ export function HeroChat() {
 
   useEffect(() => {
     if (object) {
+      const resumeObj = object as ResumeContentSchema
+      setResumeContent(resumeObj)
+      // Auto-expand first section when new artifact arrives
+      if (resumeObj.sections && resumeObj.sections.length > 0) {
+        setExpandedSection(`${resumeObj.sections[0].type}-0`)
+      }
       const content: Message['content'] = [
-        { type: 'text', text: (object as ResumeContentSchema).commentary || '' },
+        { type: 'text', text: resumeObj.commentary || '' },
       ]
       setMessages((prev) => {
         const last = prev[prev.length - 1]
@@ -85,6 +93,7 @@ export function HeroChat() {
     }
     const updatedMessages = [...messages, newMessage]
     setMessages(updatedMessages)
+    setResumeContent(undefined) // clear stale artifact while loading
     if (!isSessionActive) setIsSessionActive(true)
     sendMessages(updatedMessages)
     setInput('')
@@ -98,6 +107,7 @@ export function HeroChat() {
     }
     const updatedMessages = [...messages, newMessage]
     setMessages(updatedMessages)
+    setResumeContent(undefined) // clear stale artifact while loading
     if (!isSessionActive) setIsSessionActive(true)
     sendMessages(updatedMessages)
   }
@@ -153,6 +163,8 @@ export function HeroChat() {
                 onClick={() => {
                   setMessages([])
                   setIsSessionActive(false)
+                  setResumeContent(undefined)
+                  setExpandedSection(null)
                 }}
                 className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50"
               >
@@ -165,7 +177,7 @@ export function HeroChat() {
         {/* Chat messages area */}
         <div
           ref={chatRef}
-          className="flex-1 overflow-y-auto space-y-3 pr-1 scrollbar-thin"
+          className="flex-1 overflow-y-auto space-y-4 pr-1 scrollbar-thin"
         >
           {showChips ? (
             <div className="flex-1 flex flex-col items-center justify-center min-h-[55vh] px-4 animate-in fade-in duration-500">
@@ -214,6 +226,34 @@ export function HeroChat() {
                       }
                       return null
                     })}
+
+                    {/* Render resume sections artifact below the commentary */}
+                    {message.role === 'assistant' && resumeContent?.sections && resumeContent.sections.length > 0 && index === messages.length - 1 && (
+                      <div className="mt-4 pt-3 border-t border-border/30">
+                        <div className="flex items-center gap-2 mb-3">
+                          <FileText className="w-3.5 h-3.5 text-primary/60" />
+                          <span className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground/50">
+                            Resume Artifact
+                          </span>
+                        </div>
+                        <div className="space-y-2">
+                          {resumeContent.sections.map((section, idx) => (
+                            <SectionCard
+                              key={`${section.type}-${idx}`}
+                              section={section}
+                              isExpanded={expandedSection === `${section.type}-${idx}`}
+                              onToggle={() =>
+                                setExpandedSection(
+                                  expandedSection === `${section.type}-${idx}`
+                                    ? null
+                                    : `${section.type}-${idx}`,
+                                )
+                              }
+                            />
+                          ))}
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               ))}
@@ -311,5 +351,84 @@ export function HeroChat() {
         </div>
       </div>
     </section>
+  )
+}
+
+// ── SectionCard: renders a single resume section as a compact artifact card ──
+
+function SectionCard({
+  section,
+  isExpanded,
+  onToggle,
+}: {
+  section: ResumeSectionSchema
+  isExpanded: boolean
+  onToggle: () => void
+}) {
+  return (
+    <div className="rounded-xl border border-border/50 bg-background/50 overflow-hidden transition-all duration-200">
+      <button
+        onClick={onToggle}
+        className="w-full flex items-center justify-between px-3 py-2 text-left hover:bg-accent/30 transition-colors"
+      >
+        <span className="text-xs font-medium text-foreground">
+          {section.title}
+        </span>
+        <svg
+          className={`w-3.5 h-3.5 text-muted-foreground transition-transform duration-200 ${
+            isExpanded ? 'rotate-180' : ''
+          }`}
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          strokeWidth="2"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        >
+          <path d="m6 9 6 6 6-6" />
+        </svg>
+      </button>
+      {isExpanded && (
+        <div className="px-3 pb-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
+          {section.items.map((item, idx) => (
+            <div key={idx} className="text-xs text-muted-foreground space-y-0.5">
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-medium text-foreground">
+                  {item.label}
+                </span>
+                {item.tags?.map((tag) => (
+                  <span
+                    key={tag}
+                    className="inline-flex px-1.5 py-0.5 rounded-full bg-accent/50 text-[9px] font-medium text-muted-foreground"
+                  >
+                    {tag}
+                  </span>
+                ))}
+                {item.url && (
+                  <a
+                    href={item.url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-muted-foreground/60 hover:text-primary transition-colors ml-auto"
+                  >
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
+              </div>
+              {item.value && (
+                <p className="text-[11px] text-muted-foreground/70">
+                  {item.value}
+                </p>
+              )}
+              {item.detail && (
+                <p className="text-xs text-muted-foreground/60 leading-relaxed mt-0.5">
+                  {item.detail}
+                </p>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
   )
 }

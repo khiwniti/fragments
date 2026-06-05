@@ -35,9 +35,11 @@ export async function POST(req: Request) {
   const question = lastUserMsg?.content || ''
 
   try {
+    // Use streamObject with no-schema output to avoid json_schema format
+    // which NVIDIA NIM doesn't support. The system prompt still guides JSON format.
     const stream = await streamObject({
       model: modelClient as LanguageModel,
-      schema: resumeContentSchema,
+      output: 'no-schema' as const,
       system: toResumePrompt(question),
       messages: messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
       maxRetries: 0,

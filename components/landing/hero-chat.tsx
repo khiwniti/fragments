@@ -1,40 +1,25 @@
 'use client'
 
 import { useState, useEffect, useRef, useCallback } from 'react'
+import Link from 'next/link'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
 import { resumeContentSchema, type ResumeContentSchema } from '@/lib/schema'
 import { Message, toAISDKMessages } from '@/lib/messages'
 import { starterChips } from '@/lib/profile'
 import { ResumeArtifactPanel } from '@/components/landing/resume-artifact-panel'
-import { LLMModel } from '@/lib/models'
-import modelsData from '@/lib/models.json'
-import { ArrowUp, LoaderIcon, Square, Sparkles, FileText, PanelRight } from 'lucide-react'
+import { ArrowUp, LoaderIcon, Square, Sparkles, FileText, PanelRight, ArrowRight, MessageSquare } from 'lucide-react'
 import {
-  Select,
-  SelectContent,
-  SelectGroup,
-  SelectItem,
-  SelectLabel,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-
-const MODELS: LLMModel[] = modelsData.models as LLMModel[]
-
-const DEFAULT_MODEL: LLMModel = {
-  id: 'meta/llama-3.1-70b-instruct',
-  name: 'Llama 3.1 70B',
-  provider: 'NVIDIA',
-  providerId: 'nvidia',
-}
+  getOrCreateAnonId,
+  persistSession,
+} from '@/lib/storage'
 
 export function HeroChat() {
   const [messages, setMessages] = useState<Message[]>([])
   const [input, setInput] = useState('')
-  const [selectedModel, setSelectedModel] = useState<LLMModel>(DEFAULT_MODEL)
   const [isSessionActive, setIsSessionActive] = useState(false)
   const [resumeContent, setResumeContent] = useState<ResumeContentSchema | undefined>(undefined)
   const [showArtifactPanel, setShowArtifactPanel] = useState(false)
+  const [hasResponded, setHasResponded] = useState(false)
   const chatRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLTextAreaElement>(null)
 
@@ -46,10 +31,17 @@ export function HeroChat() {
     },
   })
 
+  // Ensure anonymous identity on mount
+  useEffect(() => {
+    getOrCreateAnonId()
+  }, [])
+
+  // When response arrives: update state and persist so /chat can restore
   useEffect(() => {
     if (object) {
       const resumeObj = object as ResumeContentSchema
       setResumeContent(resumeObj)
+      setHasResponded(true)
       if (!showArtifactPanel) setShowArtifactPanel(true)
       const content: Message['content'] = [
         { type: 'text', text: resumeObj.commentary || '' },
@@ -64,6 +56,15 @@ export function HeroChat() {
     }
   }, [object])
 
+  // Persist session when messages or resume change
+  useEffect(() => {
+    if (messages.length === 0) return
+    const timer = setTimeout(() => {
+      persistSession(messages, resumeContent)
+    }, 1000)
+    return () => clearTimeout(timer)
+  }, [messages, resumeContent])
+
   useEffect(() => {
     if (chatRef.current) {
       chatRef.current.scrollTop = chatRef.current.scrollHeight
@@ -73,12 +74,9 @@ export function HeroChat() {
   const sendMessages = useCallback(
     (updatedMessages: Message[]) => {
       const aiMessages = toAISDKMessages(updatedMessages)
-      submit({
-        messages: aiMessages,
-        model: selectedModel,
-      })
+      submit({ messages: aiMessages })
     },
-    [submit, selectedModel],
+    [submit],
   )
 
   function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
@@ -108,11 +106,6 @@ export function HeroChat() {
     sendMessages(updatedMessages)
   }
 
-  function handleModelChange(value: string) {
-    const model = MODELS.find((m) => m.id === value)
-    if (model) setSelectedModel(model)
-  }
-
   function onKeyDown(e: React.KeyboardEvent<HTMLTextAreaElement>) {
     if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
       e.preventDefault()
@@ -122,18 +115,6 @@ export function HeroChat() {
   }
 
   const showChips = messages.length === 0 && !isLoading
-
-  // Group models by provider for the select
-  const groupedModels = MODELS.reduce(
-    (acc, model) => {
-      const provider = model.provider
-      if (!acc[provider]) acc[provider] = []
-      acc[provider].push(model)
-      return acc
-    },
-    {} as Record<string, LLMModel[]>,
-  )
-
   const panelOpen = showArtifactPanel && resumeContent?.sections && resumeContent.sections.length > 0
 
   return (
@@ -149,7 +130,7 @@ export function HeroChat() {
         </div>
       )}
 
-      {/* Chat container - flex column so input stays at bottom */}
+      {/* Chat container */}
       <div className="flex-1 flex flex-col w-full px-4 md:px-6 relative z-10">
         {/* Header area */}
         <div className="pt-6 pb-2 flex items-center justify-between">
@@ -167,6 +148,7 @@ export function HeroChat() {
                   setIsSessionActive(false)
                   setResumeContent(undefined)
                   setShowArtifactPanel(false)
+                  setHasResponded(false)
                 }}
                 className="text-xs text-muted-foreground/60 hover:text-foreground transition-colors px-2 py-1 rounded-md hover:bg-accent/50"
               >
@@ -229,7 +211,7 @@ export function HeroChat() {
                       return null
                     })}
 
-                    {/* Clickable artifact card - opens the right panel */}
+                    {/* Clickable artifact card */}
                     {message.role === 'assistant' && resumeContent?.sections && resumeContent.sections.length > 0 && index === messages.length - 1 && (
                       <button
                         onClick={() => setShowArtifactPanel(true)}
@@ -243,7 +225,7 @@ export function HeroChat() {
                             {resumeContent.focus || 'Resume View'}
                           </span>
                           <span className="text-[10px] text-muted-foreground/50">
-                            {resumeContent.sections.length} sections · Click to expand
+                            {resumeContent.sections.length} sections
                           </span>
                         </div>
                         <div className="ml-auto flex items-center gap-1 text-[10px] text-muted-foreground/40 group-hover:text-muted-foreground/70 transition-colors">
@@ -254,6 +236,20 @@ export function HeroChat() {
                   </div>
                 </div>
               ))}
+
+              {/* Continue in full chat button */}
+              {hasResponded && !isLoading && (
+                <div className="flex justify-center animate-in fade-in duration-300">
+                  <Link
+                    href="/chat"
+                    className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-primary/10 border border-primary/20 text-primary text-xs font-medium hover:bg-primary/20 hover:border-primary/30 transition-all duration-200 group"
+                  >
+                    <MessageSquare className="w-3.5 h-3.5" />
+                    Continue in full chat
+                    <ArrowRight className="w-3.5 h-3.5 group-hover:translate-x-0.5 transition-transform" />
+                  </Link>
+                </div>
+              )}
 
               {isLoading && (
                 <div className="flex justify-start animate-in fade-in slide-in-from-bottom-2 duration-300">
@@ -276,38 +272,10 @@ export function HeroChat() {
           </div>
         )}
 
-        {/* Input area - Fragments-style polished bar */}
+        {/* Input area */}
         <div className="pb-4 md:pb-6 mt-auto">
           <form onSubmit={handleSubmit} className="relative">
-            <div className="shadow-md rounded-2xl bg-background border border-border/60 focus-within:border-primary/40 transition-colors">
-              {/* Model selector row (Fragments-style inline) */}
-              <div className="flex items-center px-3 pt-2.5 pb-1 gap-2">
-                <Select
-                  value={selectedModel.id}
-                  onValueChange={handleModelChange}
-                >
-                  <SelectTrigger className="whitespace-nowrap border-none shadow-none focus:ring-0 px-0 py-0 h-6 text-xs text-muted-foreground hover:text-foreground transition-colors gap-1.5">
-                    <Sparkles className="w-3.5 h-3.5 text-primary/60" />
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent side="top" className="max-h-[300px]">
-                    {Object.entries(groupedModels).map(([provider, models]) => (
-                      <SelectGroup key={provider}>
-                        <SelectLabel className="text-[10px] uppercase tracking-wider text-muted-foreground/50">
-                          {provider}
-                        </SelectLabel>
-                        {models.map((model) => (
-                          <SelectItem key={model.id} value={model.id} className="text-xs">
-                            {model.name}
-                          </SelectItem>
-                        ))}
-                      </SelectGroup>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              {/* Textarea */}
+            <div className="shadow-sm rounded-2xl bg-background border border-border/60 focus-within:border-primary/40 transition-colors">
               <textarea
                 ref={inputRef}
                 value={input}
@@ -315,11 +283,9 @@ export function HeroChat() {
                 onKeyDown={onKeyDown}
                 placeholder="Ask about experience, skills, or projects..."
                 rows={1}
-                className="text-normal px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none text-sm py-2 max-h-32 scrollbar-thin"
+                className="text-normal px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none text-sm py-2.5 max-h-32 scrollbar-thin"
                 disabled={isLoading}
               />
-
-              {/* Bottom row: actions */}
               <div className="flex items-center px-3 pb-3 pt-1 gap-2">
                 <div className="flex-1" />
                 {isLoading ? (
@@ -343,7 +309,7 @@ export function HeroChat() {
             </div>
           </form>
           <p className="text-[10px] text-muted-foreground/40 text-center mt-2">
-            Ask about Khiw (Ikkyu) Nitithadachot &middot; AI-Augmented Full-Stack Developer
+            No account required &middot; Sessions save automatically
           </p>
         </div>
       </div>

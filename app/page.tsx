@@ -1,7 +1,7 @@
 'use client'
 
 import { NavBar } from '@/components/navbar'
-import { HeroWidget } from '@/components/landing/hero-widget'
+import { HeroChat } from '@/components/landing/hero-chat'
 import { ProjectsWidget } from '@/components/landing/projects-widget'
 import { DomainsWidget } from '@/components/landing/domains-widget'
 import { SkillsWidget } from '@/components/landing/skills-widget'
@@ -50,7 +50,7 @@ export default function Home() {
       </div>
 
       <div className="relative">
-        <HeroWidget />
+        <HeroChat />
         <ScrollIndicator />
       </div>
 

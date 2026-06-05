@@ -1,82 +1,51 @@
-import { handleAPIError, createRateLimitResponse } from '@/lib/api-errors'
-import { Duration } from '@/lib/duration'
+import { handleAPIError } from '@/lib/api-errors'
 import { getModelClient, LLMModel, LLMModelConfig } from '@/lib/models'
-import { getEnrichedContext } from '@/lib/resume-agent-client'
 import { toResumePrompt } from '@/lib/resume-prompt'
-import ratelimit from '@/lib/ratelimit'
-import { resumeContentSchema as schema } from '@/lib/schema'
-import { streamObject, LanguageModel, ModelMessage } from 'ai'
+import { resumeContentSchema } from '@/lib/schema'
+import { streamObject, LanguageModel } from 'ai'
 
 export const maxDuration = 300
-
-const rateLimitMaxRequests = process.env.RATE_LIMIT_MAX_REQUESTS
-  ? parseInt(process.env.RATE_LIMIT_MAX_REQUESTS)
-  : 10
-const ratelimitWindow = process.env.RATE_LIMIT_WINDOW
-  ? (process.env.RATE_LIMIT_WINDOW as Duration)
-  : '1d'
 
 export async function POST(req: Request) {
   const {
     messages,
-    userID,
-    teamID,
     model,
     config,
   }: {
-    messages: ModelMessage[]
-    userID: string | undefined
-    teamID: string | undefined
-    model: LLMModel
-    config: LLMModelConfig
+    messages: { role: string; content: string }[]
+    model?: LLMModel
+    config?: LLMModelConfig
   } = await req.json()
 
-  const limit = !config.apiKey
-    ? await ratelimit(
-        req.headers.get('x-forwarded-for'),
-        rateLimitMaxRequests,
-        ratelimitWindow,
-      )
-    : false
-
-  if (limit) {
-    return createRateLimitResponse(limit)
+  // Default to NVIDIA Llama 3.1 Nemotron 70B if no model specified
+  const activeModel: LLMModel = model || {
+    id: 'nvidia/llama-3.1-nemotron-70b-instruct',
+    name: 'Llama 3.1 Nemotron 70B',
+    provider: 'NVIDIA',
+    providerId: 'nvidia',
   }
 
-  console.log('userID', userID)
-  console.log('teamID', teamID)
-  console.log('model', model)
+  const activeConfig: LLMModelConfig = config || {}
 
-  const { model: modelNameString, apiKey: modelApiKey, ...modelParams } = config
-  const modelClient = getModelClient(model, config)
+  const { model: modelNameString, apiKey: modelApiKey, ...modelParams } = activeConfig
+  const modelClient = getModelClient(activeModel, activeConfig)
 
-    // Extract the last user message for targeted knowledge context
-    const lastUserMessage = messages
-      .slice()
-      .reverse()
-      .find((m) => m.role === 'user')
-    const question = lastUserMessage
-      ? typeof lastUserMessage.content === 'string'
-        ? lastUserMessage.content
-        : ''
-      : ''
+  // Extract the latest user question from messages
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')
+  const question = lastUserMsg?.content || ''
 
   try {
-    // Fetch enriched live graph context from multiple backend endpoints.
-    // Falls back to static knowledge data if backend is unreachable.
-    const knowledgeContext = await getEnrichedContext(question || undefined)
-
     const stream = await streamObject({
       model: modelClient as LanguageModel,
-      schema,
-      system: toResumePrompt(question || undefined, knowledgeContext),
-      messages,
+      schema: resumeContentSchema,
+      system: toResumePrompt(question),
+      messages: messages.map((m) => ({ role: m.role as 'user' | 'assistant', content: m.content })),
       maxRetries: 0,
       ...modelParams,
     })
 
     return stream.toTextStreamResponse()
   } catch (error: any) {
-    return handleAPIError(error, { hasOwnApiKey: !!config.apiKey })
+    return handleAPIError(error, { hasOwnApiKey: !!activeConfig.apiKey })
   }
 }

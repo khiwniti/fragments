@@ -45,7 +45,7 @@ export function HeroChat() {
     const aiMessages = toAISDKMessages(updatedMessages)
     submit({
       messages: aiMessages,
-      model: { id: 'claude-sonnet-4-20250514', name: 'Claude Sonnet 4', provider: 'anthropic' },
+      model: { id: 'nvidia/llama-3.1-nemotron-70b-instruct', name: 'Llama 3.1 Nemotron 70B', provider: 'NVIDIA', providerId: 'nvidia' },
     })
   }, [submit])
 

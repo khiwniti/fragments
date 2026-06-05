@@ -390,7 +390,7 @@ function SectionCard({
       </button>
       {isExpanded && (
         <div className="px-3 pb-3 space-y-2 animate-in fade-in slide-in-from-top-1 duration-200">
-          {section.items.map((item, idx) => (
+          {(section.items || []).map((item, idx) => (
             <div key={idx} className="text-xs text-muted-foreground space-y-0.5">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-medium text-foreground">

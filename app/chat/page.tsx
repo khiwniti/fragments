@@ -8,7 +8,7 @@ import { useSearchParams } from 'next/navigation'
 import { Chat } from '@/components/chat'
 import { ChatInput } from '@/components/chat-input'
 import { Preview } from '@/components/preview'
-import { ResumeArtifact } from '@/components/resume-artifact'
+import { ResumePreview } from '@/components/resume-preview'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth'
 import { Message, toAISDKMessages, toMessageImage } from '@/lib/messages'
@@ -53,6 +53,7 @@ function ChatPageInner() {
   const [fragment, setFragment] = useState<DeepPartial<FragmentSchema>>()
   const [resumeContent, setResumeContent] = useState<DeepPartial<ResumeContentSchema>>()
   const [currentTab, setCurrentTab] = useState<'code' | 'fragment'>('code')
+  const [resumeTab, setResumeTab] = useState<'preview' | 'data'>('preview')
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [conversations, setConversations] = useState<SavedSession[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -444,21 +445,13 @@ function ChatPageInner() {
           {showRightPanel && (
             <div className="w-[480px] border-l border-border animate-slide-in-right flex-shrink-0">
               {isResumeMode && resumeContent ? (
-                <div className="relative h-full w-full flex flex-col">
-                  {/* Close button — left side avoids Print button on right */}
-                  <div className="absolute top-2 left-2 z-20">
-                    <button
-                      onClick={() => setShowArtifactPanel(false)}
-                      className="flex items-center justify-center w-7 h-7 rounded-md text-muted-foreground/50 hover:text-foreground hover:bg-accent/50 transition-colors"
-                      aria-label="Close panel"
-                    >
-                      <svg width="14" height="14" viewBox="0 0 15 15" fill="none" xmlns="http://www.w3.org/2000/svg">
-                        <path d="M11.7816 4.03157C12.0062 3.80702 12.0062 3.44295 11.7816 3.2184C11.5571 2.99385 11.193 2.99385 10.9685 3.2184L7.50005 6.68682L4.03164 3.2184C3.80708 2.99385 3.44301 2.99385 3.21846 3.2184C2.99391 3.44295 2.99391 3.80702 3.21846 4.03157L6.68688 7.49999L3.21846 10.9684C2.99391 11.1929 2.99391 11.557 3.21846 11.7815C3.44301 12.0061 3.80708 12.0061 4.03164 11.7815L7.50005 8.31316L10.9685 11.7815C11.193 12.0061 11.5571 12.0061 11.7816 11.7815C12.0062 11.557 12.0062 11.1929 11.7816 10.9684L8.31322 7.49999L11.7816 4.03157Z" fill="currentColor" fillRule="evenodd" clipRule="evenodd" />
-                      </svg>
-                    </button>
-                  </div>
-                  <ResumeArtifact content={resumeContent} isLoading={isLoading} />
-                </div>
+                <ResumePreview
+                  selectedTab={resumeTab}
+                  onSelectedTabChange={setResumeTab}
+                  isChatLoading={isLoading}
+                  content={resumeContent}
+                  onClose={() => setShowArtifactPanel(false)}
+                />
               ) : !isResumeMode ? (
                 <Preview
                   teamID={userTeam?.id}

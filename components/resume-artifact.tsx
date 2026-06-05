@@ -4,9 +4,7 @@ import { ResumeContentSchema } from '@/lib/schema'
 import { DeepPartial } from 'ai'
 import { profile } from '@/lib/profile'
 import { ResumeSection } from './resume/resume-section'
-import { MapPin, Mail, Phone, Globe, Github, Linkedin, Printer } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useCallback } from 'react'
+import { MapPin, Mail, Phone, Globe, Github, Linkedin } from 'lucide-react'
 
 function ResumeSkeleton() {
   return (
@@ -39,27 +37,10 @@ export function ResumeArtifact({
   content?: DeepPartial<ResumeContentSchema>
   isLoading?: boolean
 }) {
-  const handlePrint = useCallback(() => {
-    window.print()
-  }, [])
-
   return (
-    <div className="absolute md:relative z-10 top-0 left-0 shadow-2xl md:rounded-tl-3xl md:rounded-bl-3xl md:border-l md:border-y bg-popover h-full w-full overflow-auto flex flex-col">
-      {/* Toolbar */}
-      <div className="flex items-center justify-end p-2 border-b print:hidden">
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={handlePrint}
-          className="text-muted-foreground hover:text-primary gap-1"
-        >
-          <Printer className="h-4 w-4" />
-          Print / PDF
-        </Button>
-      </div>
-
+    <div className="h-full w-full overflow-y-auto flex flex-col">
       {/* Resume scrollable body */}
-      <div className="flex-1 overflow-y-auto p-6 md:p-10">
+      <div className="flex-1 p-6 md:p-10">
         {/* ── Fixed Header ── */}
         <header className="border-b border-border pb-6 mb-6">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary font-sans">

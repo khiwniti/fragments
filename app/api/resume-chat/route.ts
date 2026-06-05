@@ -58,9 +58,10 @@ export async function POST(req: Request) {
     const decoder = new TextDecoder()
     const encoder = new TextEncoder()
     let buffer = ''
-    let accumulatedJSON = ''
-    let lastEmittedJSON = ''
 
+    // AI SDK v6 useObject reads the raw text stream and accumulates it,
+    // calling parsePartialJson() on the accumulated text with each chunk.
+    // So we stream raw JSON delta content directly from NVIDIA SSE events.
     const stream = new ReadableStream({
       async start(controller) {
         try {
@@ -79,21 +80,9 @@ export async function POST(req: Request) {
                   const parsed = JSON.parse(data)
                   const deltaContent = parsed.choices?.[0]?.delta?.content || ''
                   if (deltaContent) {
-                    accumulatedJSON += deltaContent
-                    // Try to parse accumulated JSON and emit partial object
-                    try {
-                      const partialObj = JSON.parse(accumulatedJSON)
-                      const partialStr = JSON.stringify(partialObj)
-                      // Only emit when the object actually changed
-                      if (partialStr !== lastEmittedJSON) {
-                        lastEmittedJSON = partialStr
-                        // Wrap in ObjectStreamPart format for useObject compatibility
-                        const output = JSON.stringify({ type: 'object', object: partialObj }) + '\n'
-                        controller.enqueue(encoder.encode(output))
-                      }
-                    } catch {
-                      // JSON not yet complete - continue accumulating
-                    }
+                    // Stream raw JSON delta content directly.
+                    // useObject will accumulate these chunks and parse partial JSON.
+                    controller.enqueue(encoder.encode(deltaContent))
                   }
                 } catch {
                   // Skip malformed SSE JSON

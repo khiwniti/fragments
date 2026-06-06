@@ -39,15 +39,15 @@ export function ResumeArtifact({
 
     sections.forEach((section, si) => {
       out.push({
-        key: `s${si}-heading`,
+        key: `${section!.type}-heading`,
         kind: 'heading',
-        element: <SectionHeadingBlock title={section!.title} />,
+        element: <SectionHeadingBlock title={section?.title ?? ''} />,
       })
       ;(section!.items ?? [])
         .filter((item): item is NonNullable<typeof item> => !!item)
         .forEach((item, ii) => {
           out.push({
-            key: `s${si}-item${ii}`,
+            key: `${section!.type}-item-${ii}`,
             kind: 'item',
             element: <SectionItemBlock item={item} />,
           })

@@ -2,33 +2,15 @@
 
 import { ResumeContentSchema } from '@/lib/schema'
 import { DeepPartial } from 'ai'
-import { profile } from '@/lib/profile'
-import { ResumeSection } from './resume/resume-section'
-import { MapPin, Mail, Phone, Globe, Github, Linkedin } from 'lucide-react'
-
-function ResumeSkeleton() {
-  return (
-    <div className="space-y-8 animate-pulse">
-      <div className="space-y-3">
-        <div className="h-5 w-32 rounded bg-muted" />
-        <div className="h-3 w-full rounded bg-muted/60" />
-        <div className="h-3 w-5/6 rounded bg-muted/60" />
-        <div className="h-3 w-4/6 rounded bg-muted/60" />
-      </div>
-      <div className="space-y-3">
-        <div className="h-5 w-40 rounded bg-muted" />
-        <div className="h-3 w-full rounded bg-muted/60" />
-        <div className="h-3 w-3/4 rounded bg-muted/60" />
-      </div>
-      <div className="space-y-3">
-        <div className="h-5 w-24 rounded bg-muted" />
-        <div className="h-3 w-full rounded bg-muted/60" />
-        <div className="h-3 w-2/3 rounded bg-muted/60" />
-        <div className="h-3 w-5/6 rounded bg-muted/60" />
-      </div>
-    </div>
-  )
-}
+import { useMemo } from 'react'
+import { A4Pager, PagerBlock } from './resume/a4-pager'
+import {
+  ResumeHeaderBlock,
+  SectionHeadingBlock,
+  SectionItemBlock,
+  SheetSkeletonBlock,
+  SheetEmptyBlock,
+} from './resume/a4-blocks'
 
 export function ResumeArtifact({
   content,
@@ -37,83 +19,42 @@ export function ResumeArtifact({
   content?: DeepPartial<ResumeContentSchema>
   isLoading?: boolean
 }) {
-  return (
-    <div className="h-full w-full overflow-y-auto flex flex-col">
-      {/* Resume scrollable body */}
-      <div className="flex-1 p-6 md:p-10">
-        {/* ── Fixed Header ── */}
-        <header className="border-b border-border pb-6 mb-6">
-          <h1 className="text-3xl md:text-4xl font-bold tracking-tight text-primary font-sans">
-            {profile.fullName}
-          </h1>
-          <p className="text-lg text-muted-foreground mt-1 font-medium">
-            {profile.headline}
-          </p>
+  const blocks: PagerBlock[] = useMemo(() => {
+    const out: PagerBlock[] = [
+      { key: 'header', kind: 'header', element: <ResumeHeaderBlock /> },
+    ]
 
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-sm text-muted-foreground">
-            <span className="flex items-center gap-1">
-              <MapPin className="h-3.5 w-3.5" />
-              {profile.location}
-            </span>
-            <span className="flex items-center gap-1">
-              <Mail className="h-3.5 w-3.5" />
-              <a href={`mailto:${profile.email}`} className="hover:text-primary transition-colors">
-                {profile.email}
-              </a>
-            </span>
-            <span className="flex items-center gap-1">
-              <Phone className="h-3.5 w-3.5" />
-              {profile.phone}
-            </span>
-            <span className="flex items-center gap-1">
-              <Globe className="h-3.5 w-3.5" />
-              <a href={profile.portfolio} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
-                {profile.portfolio.replace('https://', '')}
-              </a>
-            </span>
-            <span className="flex items-center gap-1">
-              <Github className="h-3.5 w-3.5" />
-              <a href={profile.github} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
-                github.com/getintheQ
-              </a>
-            </span>
-            <span className="flex items-center gap-1">
-              <Linkedin className="h-3.5 w-3.5" />
-              <a href={profile.linkedin} target="_blank" rel="noreferrer" className="hover:text-primary transition-colors">
-                linkedin.com/in/getintheq
-              </a>
-            </span>
-          </div>
+    const sections = (content?.sections ?? []).filter(
+      (section) => section?.items?.length,
+    )
 
-          {profile.openToWork && (
-            <div className="mt-3 inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 text-emerald-400 text-xs font-medium border border-emerald-500/20">
-              <span className="relative flex h-2 w-2">
-                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75" />
-                <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500" />
-              </span>
-              Open to work · {profile.workPreferences}
-            </div>
-          )}
-        </header>
+    if (sections.length === 0) {
+      out.push({
+        key: 'placeholder',
+        kind: 'item',
+        element: isLoading ? <SheetSkeletonBlock /> : <SheetEmptyBlock />,
+      })
+      return out
+    }
 
-        {/* ── Dynamic Body ── */}
-        {isLoading && (!content || !content.sections || content.sections.length === 0) ? (
-          <ResumeSkeleton />
-        ) : content && content.sections && content.sections.length > 0 ? (
-          <div className="space-y-8 animate-in fade-in slide-in-from-bottom-2 duration-500">
-            {content.sections
-              .filter((section) => section?.items?.length)
-              .map((section, i) => (
-                <ResumeSection key={`${section!.type}-${i}`} section={section!} />
-              ))}
-          </div>
-        ) : (
-          <div className="text-center text-muted-foreground py-12">
-            <p className="text-sm">Ask a question to generate a tailored resume view.</p>
-            <p className="text-xs mt-1 opacity-60">The content here adapts to your prompt.</p>
-          </div>
-        )}
-      </div>
-    </div>
-  )
+    sections.forEach((section, si) => {
+      out.push({
+        key: `s${si}-heading`,
+        kind: 'heading',
+        element: <SectionHeadingBlock title={section!.title} />,
+      })
+      ;(section!.items ?? [])
+        .filter((item): item is NonNullable<typeof item> => !!item)
+        .forEach((item, ii) => {
+          out.push({
+            key: `s${si}-item${ii}`,
+            kind: 'item',
+            element: <SectionItemBlock item={item} />,
+          })
+        })
+    })
+    return out
+  }, [content, isLoading])
+
+  return <A4Pager blocks={blocks} />
 }

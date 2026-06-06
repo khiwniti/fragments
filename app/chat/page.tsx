@@ -132,16 +132,26 @@ function ChatPageInner() {
     return () => clearTimeout(timer)
   }, [searchParams, messages.length])
 
-  // ── Auto-persist session when messages change ─────────────────────────
+  // ── Auto-persist resume content immediately (no debounce) ─────────────
+  // Resume content is saved immediately so a slow AI response doesn't get
+  // overwritten by a concurrent messages-debounce timer with stale content.
+  useEffect(() => {
+    if (!resumeContent || messages.length === 0) return
+    const saved = persistSession(messages, resumeContent)
+    setCurrentConversationId((prev) => prev || saved.id)
+    setConversations(listSessions())
+  }, [resumeContent])
+
+  // ── Auto-persist messages (debounced) ────────────────────────────────
   useEffect(() => {
     if (messages.length === 0) return
     const timer = setTimeout(() => {
       const saved = persistSession(messages, resumeContent)
       setCurrentConversationId((prev) => prev || saved.id)
       setConversations(listSessions())
-    }, 2000)
+    }, 1000)
     return () => clearTimeout(timer)
-  }, [messages, resumeContent])
+  }, [messages])
 
   const apiEndpoint = isResumeMode ? '/api/resume-chat' : '/api/chat'
   const activeSchema = isResumeMode ? resumeContentSchema : fragmentSchema
@@ -271,6 +281,8 @@ function ChatPageInner() {
       setResumeContent(restored.resumeContent)
       setFragment(undefined)
       setResult(undefined)
+      // Restore panel visibility when switching sessions
+      setShowArtifactPanel(!!restored.resumeContent)
     }
   }
 
@@ -324,7 +336,7 @@ function ChatPageInner() {
     setResult(preview.result)
   }
 
-  const showRightPanel = isResumeMode ? (showArtifactPanel && resumeContent?.sections && resumeContent.sections.length > 0) : !!fragment
+  const showRightPanel = isResumeMode ? (showArtifactPanel && !!resumeContent) : !!fragment
 
   return (
     <main className="flex h-screen bg-background">

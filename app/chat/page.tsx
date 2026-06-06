@@ -408,7 +408,7 @@ function ChatPageInner() {
 
         {/* Chat area */}
         <div className="flex-1 flex overflow-hidden">
-          <div className={`flex flex-col flex-1 max-w-[800px] mx-auto px-4 overflow-hidden ${showRightPanel ? '' : 'w-full'}`}>
+          <div className={`flex flex-col flex-1 min-w-[360px] max-w-[800px] mx-auto px-4 overflow-hidden ${showRightPanel ? '' : 'w-full'}`}>
             <Chat
               messages={messages}
               isLoading={isLoading}
@@ -443,7 +443,7 @@ function ChatPageInner() {
           </div>
 
           {showRightPanel && (
-            <div className="w-[480px] border-l border-border animate-slide-in-right flex-shrink-0">
+            <div className="w-[60%] border-l border-border animate-slide-in-right flex-shrink-0">
               {isResumeMode && resumeContent ? (
                 <ResumePreview
                   selectedTab={resumeTab}

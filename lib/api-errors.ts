@@ -65,13 +65,13 @@ export function handleAPIError(
     )
   }
 
-  // Generic error handling
-  const errorMessage =
-    error?.message && String(error?.message).trim()
-      ? String(error.message)
-      : 'An unexpected error has occurred. Please try again later.'
+  // Generic error handling — log details server-side, return safe generic to client
+  console.error('API Error:', error)
 
-  return new Response(errorMessage, { status: 500 })
+  return new Response(
+    'An unexpected error has occurred. Please try again later.',
+    { status: 500 },
+  )
 }
 
 /**

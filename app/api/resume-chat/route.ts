@@ -104,11 +104,10 @@ export async function POST(req: Request) {
       },
     })
   } catch (error: any) {
-    const message =
-      error?.message && String(error.message).trim()
-        ? String(error.message)
-        : 'An unexpected error occurred'
+    // Log full error server-side; return generic message to client to avoid leaking internals
     console.error('Resume chat error:', error)
-    return new Response(`Error: ${message}`, { status: 500 })
+    return new Response('An unexpected error occurred. Please try again later.', {
+      status: 500,
+    })
   }
 }

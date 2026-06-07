@@ -44,7 +44,7 @@ export default async function BlogPage({ searchParams }: BlogPageProps) {
               <BookOpen className="w-6 h-6 text-primary" />
               <h1 className="text-3xl font-bold tracking-tight">Blog</h1>
             </div>
-            <Link href="/blog/feed.xml">
+            <Link href="/api/blog/rss">
               <Button variant="ghost" size="sm" className="gap-2">
                 <Rss className="w-4 h-4" />
                 RSS

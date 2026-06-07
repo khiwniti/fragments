@@ -1,5 +1,6 @@
 import { NextRequest } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { isAdminAuthenticated } from '@/lib/auth/admin-session'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
 const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -12,6 +13,10 @@ const supabaseAdmin =
     : null
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await isAdminAuthenticated())) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   if (!supabaseAdmin) {
     return Response.json({ error: 'Supabase not configured' }, { status: 500 })
   }
@@ -34,6 +39,10 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  if (!(await isAdminAuthenticated())) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   if (!supabaseAdmin) {
     return Response.json({ error: 'Supabase not configured' }, { status: 500 })
   }

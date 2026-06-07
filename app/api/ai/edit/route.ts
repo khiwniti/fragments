@@ -1,8 +1,13 @@
 import { NextRequest } from 'next/server'
 import { streamText } from 'ai'
 import { getModelClient, LLMModel, LLMModelConfig } from '@/lib/models'
+import { isAdminAuthenticated } from '@/lib/auth/admin-session'
 
 export async function POST(request: NextRequest) {
+  if (!(await isAdminAuthenticated())) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const {
       text,

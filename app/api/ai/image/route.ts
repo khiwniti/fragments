@@ -1,8 +1,13 @@
 import { NextRequest } from 'next/server'
 import { generateImage } from 'ai'
 import { createOpenAI } from '@ai-sdk/openai'
+import { isAdminAuthenticated } from '@/lib/auth/admin-session'
 
 export async function POST(request: NextRequest) {
+  if (!(await isAdminAuthenticated())) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   try {
     const { prompt, size = '1024x1024', model = 'dall-e-3' } = await request.json()
 

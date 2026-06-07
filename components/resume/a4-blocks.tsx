@@ -73,55 +73,138 @@ export function ResumeHeaderBlock() {
   )
 }
 
+// ── Interactivity ────────────────────────────────────────────────────────
+// Blocks are render-only by default; when `onSelect` is provided they become
+// clickable drill-down targets, and `highlighted` adds an amber ping. Both
+// are print-safe (no rings/animation on paper).
+
+export interface InteractiveProps {
+  onSelect?: (id: string, label: string) => void
+  highlighted?: boolean
+}
+
+const HIGHLIGHT_CLASSES =
+  'ring-2 ring-amber-400 animate-pulse rounded-sm print:ring-0 print:animate-none'
+
+/** Max nesting depth for `item.children` drill-down rendering. */
+const MAX_CHILD_DEPTH = 3
+
 /** Section heading — packed so it is never orphaned from its first item. */
-export function SectionHeadingBlock({ title }: { title?: string }) {
-  return (
-    <h2 className="text-[14px] font-semibold text-sky-800 tracking-tight border-b border-slate-200 pb-1 pt-2">
+export function SectionHeadingBlock({
+  title,
+  id,
+  onSelect,
+  highlighted,
+}: {
+  title?: string
+  id?: string
+} & InteractiveProps) {
+  const heading = (
+    <h2
+      className={`text-[14px] font-semibold text-sky-800 tracking-tight border-b border-slate-200 pb-1 pt-2 ${
+        highlighted ? HIGHLIGHT_CLASSES : ''
+      }`}
+    >
       {title}
     </h2>
+  )
+
+  if (!onSelect) return heading
+
+  return (
+    <button
+      type="button"
+      onClick={() => onSelect(id ?? title ?? '', title ?? '')}
+      className="block w-full text-left cursor-pointer rounded-sm hover:ring-1 hover:ring-slate-300 print:ring-0 print:animate-none"
+    >
+      {heading}
+    </button>
   )
 }
 
 /** One resume item (one job, one project, …). */
 export function SectionItemBlock({
   item,
+  onSelect,
+  highlighted,
+  highlightedIds,
+  depth = 0,
 }: {
   item: DeepPartial<ResumeItemSchema>
-}) {
-  return (
-    <div className="flex items-start justify-between gap-2">
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-2 flex-wrap">
-          <span className="font-medium text-[12px] text-slate-900">
-            {item.label}
+  /** Ids highlighted in the last turn — used to ping nested children. */
+  highlightedIds?: ReadonlySet<string>
+  /** Current nesting depth (0 = top-level item). */
+  depth?: number
+} & InteractiveProps) {
+  const itemId = item.id ?? item.label ?? ''
+  const isHighlighted =
+    highlighted ?? (itemId ? (highlightedIds?.has(itemId) ?? false) : false)
+
+  const content = (
+    <>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className="font-medium text-[12px] text-slate-900">
+          {item.label}
+        </span>
+        {item.tags?.map((tag) => (
+          <span
+            key={tag}
+            className="text-[9px] px-1.5 rounded bg-slate-100 text-slate-600 border border-slate-200 leading-4"
+          >
+            {tag}
           </span>
-          {item.tags?.map((tag) => (
-            <span
-              key={tag}
-              className="text-[9px] px-1.5 rounded bg-slate-100 text-slate-600 border border-slate-200 leading-4"
-            >
-              {tag}
-            </span>
-          ))}
-        </div>
-        {item.value && (
-          <p className="text-[10px] text-slate-500 mt-0.5">{item.value}</p>
+        ))}
+      </div>
+      {item.value && (
+        <p className="text-[10px] text-slate-500 mt-0.5">{item.value}</p>
+      )}
+      {item.detail && (
+        <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
+          {item.detail}
+        </p>
+      )}
+    </>
+  )
+
+  const children = (item.children ?? []).filter(Boolean)
+
+  return (
+    <div className={isHighlighted ? HIGHLIGHT_CLASSES : undefined}>
+      <div className="flex items-start justify-between gap-2">
+        {onSelect ? (
+          <button
+            type="button"
+            onClick={() => onSelect(itemId, item.label ?? '')}
+            className="flex-1 min-w-0 w-full text-left cursor-pointer rounded-sm hover:ring-1 hover:ring-slate-300 print:ring-0 print:animate-none"
+          >
+            {content}
+          </button>
+        ) : (
+          <div className="flex-1 min-w-0">{content}</div>
         )}
-        {item.detail && (
-          <p className="text-[11px] text-slate-600 mt-1 leading-relaxed">
-            {item.detail}
-          </p>
+        {item.url && (
+          <a
+            href={item.url}
+            target="_blank"
+            rel="noreferrer"
+            className="shrink-0 text-slate-400 hover:text-sky-800 mt-0.5"
+          >
+            <ExternalLink className="h-3 w-3" />
+          </a>
         )}
       </div>
-      {item.url && (
-        <a
-          href={item.url}
-          target="_blank"
-          rel="noreferrer"
-          className="shrink-0 text-slate-400 hover:text-sky-800 mt-0.5"
-        >
-          <ExternalLink className="h-3 w-3" />
-        </a>
+      {children.length > 0 && depth < MAX_CHILD_DEPTH && (
+        <div className="pl-4 border-l border-slate-200 mt-1 space-y-1">
+          {children.map((child, ci) => (
+            <SectionItemBlock
+              key={child?.id ?? child?.label ?? ci}
+              item={child!}
+              onSelect={onSelect}
+              highlightedIds={highlightedIds}
+              depth={depth + 1}
+            />
+          ))}
+        </div>
       )}
     </div>
   )

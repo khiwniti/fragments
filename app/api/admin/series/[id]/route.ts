@@ -1,41 +1,40 @@
 import { NextRequest } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { isAdminAuthenticated } from '@/lib/auth/admin-session'
+import { getAdminSeriesById, updateSeries, deleteSeries } from '@/lib/blog/client'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+export async function GET(
+  _request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  if (!(await isAdminAuthenticated())) {
+    return Response.json({ error: 'Unauthorized' }, { status: 401 })
+  }
 
-const supabaseAdmin =
-  supabaseUrl && serviceRoleKey
-    ? createClient(supabaseUrl, serviceRoleKey, {
-        auth: { autoRefreshToken: false, persistSession: false },
-      })
-    : null
+  try {
+    const { id } = await params
+    const series = await getAdminSeriesById(id)
+    if (!series) return Response.json({ error: 'Series not found' }, { status: 404 })
+    return Response.json({ series })
+  } catch (error) {
+    console.error('Admin series get error:', error)
+    return Response.json({ error: 'Failed to fetch series' }, { status: 500 })
+  }
+}
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   if (!(await isAdminAuthenticated())) {
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!supabaseAdmin) {
-    return Response.json({ error: 'Supabase not configured' }, { status: 500 })
+  try {
+    const { id } = await params
+    const body = await request.json()
+    const updated = await updateSeries(id, body)
+    return Response.json({ series: updated })
+  } catch (error) {
+    console.error('Admin series update error:', error)
+    return Response.json({ error: 'Failed to update series' }, { status: 500 })
   }
-
-  const { id } = await params
-  const body = await request.json()
-
-  const { data, error } = await supabaseAdmin
-    .from('series')
-    .update(body)
-    .eq('id', id)
-    .select()
-    .single()
-
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 })
-  }
-
-  return Response.json({ series: data })
 }
 
 export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -43,16 +42,12 @@ export async function DELETE(_request: NextRequest, { params }: { params: Promis
     return Response.json({ error: 'Unauthorized' }, { status: 401 })
   }
 
-  if (!supabaseAdmin) {
-    return Response.json({ error: 'Supabase not configured' }, { status: 500 })
+  try {
+    const { id } = await params
+    await deleteSeries(id)
+    return Response.json({ success: true })
+  } catch (error) {
+    console.error('Admin series delete error:', error)
+    return Response.json({ error: 'Failed to delete series' }, { status: 500 })
   }
-
-  const { id } = await params
-  const { error } = await supabaseAdmin.from('series').delete().eq('id', id)
-
-  if (error) {
-    return Response.json({ error: error.message }, { status: 500 })
-  }
-
-  return Response.json({ success: true })
 }

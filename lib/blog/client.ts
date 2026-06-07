@@ -178,6 +178,45 @@ export async function deletePost(id: string): Promise<void> {
   if (error) throw error
 }
 
+export async function getAdminSeries(): Promise<BlogSeries[]> {
+  if (!supabase) return []
+
+  const { data, error } = await supabase.from('series').select('*').order('title', { ascending: true })
+  if (error) throw error
+  return (data as BlogSeries[]) || []
+}
+
+export async function getAdminSeriesById(id: string): Promise<BlogSeries | null> {
+  if (!supabase) return null
+
+  const { data, error } = await supabase.from('series').select('*').eq('id', id).single()
+  if (error) return null
+  return data as BlogSeries
+}
+
+export async function createSeries(series: Omit<BlogSeries, 'id' | 'created_at'>): Promise<BlogSeries> {
+  if (!supabase) throw new Error('Supabase not configured')
+
+  const { data, error } = await supabase.from('series').insert(series).select().single()
+  if (error) throw error
+  return data as BlogSeries
+}
+
+export async function updateSeries(id: string, series: Partial<BlogSeries>): Promise<BlogSeries> {
+  if (!supabase) throw new Error('Supabase not configured')
+
+  const { data, error } = await supabase.from('series').update(series).eq('id', id).select().single()
+  if (error) throw error
+  return data as BlogSeries
+}
+
+export async function deleteSeries(id: string): Promise<void> {
+  if (!supabase) throw new Error('Supabase not configured')
+
+  const { error } = await supabase.from('series').delete().eq('id', id)
+  if (error) throw error
+}
+
 export async function getPostsForRSS(limit = 50): Promise<BlogPost[]> {
   if (!supabase) return []
 

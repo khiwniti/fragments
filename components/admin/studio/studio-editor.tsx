@@ -13,6 +13,16 @@ import TaskList from '@tiptap/extension-task-list'
 import TaskItem from '@tiptap/extension-task-item'
 import { useState, useCallback, useEffect, useRef, ReactNode } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 import {
   Bold,
   Italic,
@@ -198,6 +208,11 @@ export function StudioEditor({ content, onChange, placeholder = 'Start writing..
   const [slashMenuPos, setSlashMenuPos] = useState({ top: 0, left: 0 })
   const [aiLoading, setAiLoading] = useState(false)
   const [showBubbleAI, setShowBubbleAI] = useState(false)
+  const [urlDialog, setUrlDialog] = useState<{ open: boolean; mode: 'link' | 'image'; value: string }>({
+    open: false,
+    mode: 'link',
+    value: '',
+  })
   const slashMenuRef = useRef<HTMLDivElement>(null)
   const bubbleMenuRef = useRef<HTMLDivElement>(null)
 
@@ -312,22 +327,30 @@ export function StudioEditor({ content, onChange, placeholder = 'Start writing..
   const setLink = useCallback(() => {
     if (!editor) return
     const previousUrl = editor.getAttributes('link').href
-    const url = window.prompt('URL', previousUrl)
-    if (url === null) return
-    if (url === '') {
-      editor.chain().focus().extendMarkRange('link').unsetLink().run()
-      return
-    }
-    editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+    setUrlDialog({ open: true, mode: 'link', value: previousUrl || '' })
   }, [editor])
 
   const addImage = useCallback(() => {
     if (!editor) return
-    const url = window.prompt('Image URL')
-    if (url) {
-      editor.chain().focus().setImage({ src: url }).run()
-    }
+    setUrlDialog({ open: true, mode: 'image', value: '' })
   }, [editor])
+
+  function handleUrlDialogSubmit() {
+    if (!editor) return
+    const url = urlDialog.value.trim()
+    if (urlDialog.mode === 'link') {
+      if (!url) {
+        editor.chain().focus().extendMarkRange('link').unsetLink().run()
+      } else {
+        editor.chain().focus().extendMarkRange('link').setLink({ href: url }).run()
+      }
+    } else {
+      if (url) {
+        editor.chain().focus().setImage({ src: url }).run()
+      }
+    }
+    setUrlDialog({ open: false, mode: 'link', value: '' })
+  }
 
   if (!editor) {
     return <div className="rounded-lg border border-border bg-card p-8 min-h-[300px] animate-pulse" />
@@ -489,6 +512,50 @@ export function StudioEditor({ content, onChange, placeholder = 'Start writing..
           </div>
         </div>
       )}
+
+      {/* URL/Image input dialog (replaces window.prompt) */}
+      <Dialog
+        open={urlDialog.open}
+        onOpenChange={(open) => setUrlDialog((d) => ({ ...d, open }))}
+      >
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>{urlDialog.mode === 'link' ? 'Add link' : 'Add image'}</DialogTitle>
+            <DialogDescription>
+              {urlDialog.mode === 'link'
+                ? 'Enter the URL. Leave blank to remove the link.'
+                : 'Enter the image URL.'}
+            </DialogDescription>
+          </DialogHeader>
+          <div className="space-y-2">
+            <Label htmlFor="url-dialog-input">URL</Label>
+            <Input
+              id="url-dialog-input"
+              autoFocus
+              value={urlDialog.value}
+              onChange={(e) => setUrlDialog((d) => ({ ...d, value: e.target.value }))}
+              placeholder="https://..."
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault()
+                  handleUrlDialogSubmit()
+                }
+              }}
+            />
+          </div>
+          <DialogFooter>
+            <Button
+              variant="ghost"
+              onClick={() => setUrlDialog({ open: false, mode: 'link', value: '' })}
+            >
+              Cancel
+            </Button>
+            <Button onClick={handleUrlDialogSubmit}>
+              {urlDialog.mode === 'link' ? (urlDialog.value.trim() ? 'Set link' : 'Remove link') : 'Add image'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

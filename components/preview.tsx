@@ -13,7 +13,7 @@ import { FragmentSchema } from '@/lib/schema'
 import { getTemplateId } from '@/lib/templates'
 import { ExecutionResult, ExecutionResultWeb } from '@/lib/types'
 import { DeepPartial } from 'ai'
-import { ChevronsRight, LoaderCircle, PanelRightClose } from 'lucide-react'
+import { LoaderCircle, PanelRightClose } from 'lucide-react'
 import { Dispatch, SetStateAction } from 'react'
 
 export function Preview({

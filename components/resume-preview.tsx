@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import type { SandboxView } from '@/lib/resume-sandbox'
-import { ChevronsRight, LoaderCircle, PanelRightClose, Printer } from 'lucide-react'
+import { LoaderCircle, PanelRightClose, Printer } from 'lucide-react'
 import { Dispatch, SetStateAction, useCallback } from 'react'
 
 export function ResumePreview({

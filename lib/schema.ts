@@ -76,13 +76,30 @@ export type MorphEditSchema = z.infer<typeof morphEditSchema>
 // Used when the app is in RESUME_MODE. The model emits structured resume
 // sections that the <ResumeArtifact /> renders dynamically.
 
-export const resumeItemSchema = z.object({
-  label: z.string().describe('Title or label for the item.'),
-  value: z.string().optional().describe('Short value or description.'),
-  detail: z.string().optional().describe('Longer explanation or bullet point.'),
-  tags: z.array(z.string()).optional().describe('Small tags/badges, e.g. tech stack or dates.'),
-  url: z.string().optional().describe('Optional link URL.'),
-})
+export type ResumeItem = {
+  id?: string
+  label: string
+  value?: string
+  detail?: string
+  tags?: string[]
+  url?: string
+  children?: ResumeItem[]
+}
+
+export const resumeItemSchema: z.ZodType<ResumeItem> = z.lazy(() =>
+  z.object({
+    id: z.string().optional().describe('Stable kebab-case id for this item'),
+    label: z.string().describe('Title or label for the item.'),
+    value: z.string().optional().describe('Short value or description.'),
+    detail: z.string().optional().describe('Longer explanation or bullet point.'),
+    tags: z.array(z.string()).optional().describe('Small tags/badges, e.g. tech stack or dates.'),
+    url: z.string().optional().describe('Optional link URL.'),
+    children: z
+      .array(resumeItemSchema)
+      .optional()
+      .describe('Hierarchical drill-down details for this item'),
+  }),
+)
 
 export const resumeSectionTypeSchema = z.enum([
   'highlights',
@@ -95,7 +112,20 @@ export const resumeSectionTypeSchema = z.enum([
 ])
 export type ResumeSectionType = z.infer<typeof resumeSectionTypeSchema>
 
+export const resumeSectionIdSchema = z
+  .string()
+  .min(2)
+  .max(80)
+  .regex(/^[a-z0-9][a-z0-9-]*$/, {
+    message:
+      'Section id must be kebab-case, lowercase, and start with a letter or number (e.g. "summary", "experience-acme-2023", "skills-frontend").',
+  })
+  .describe(
+    'Stable kebab-case id for the section. Reuse the same id when updating an existing section. New ids should be descriptive and unique within the sandbox.',
+  )
+
 export const resumeSectionSchema = z.object({
+  id: resumeSectionIdSchema.describe('Stable kebab-case id'),
   type: resumeSectionTypeSchema.describe('Section type key.'),
   title: z.string().describe('Human-readable section title.'),
   items: z.array(resumeItemSchema).describe('Ordered list of items in this section.'),
@@ -119,21 +149,22 @@ export type ResumeItemSchema = z.infer<typeof resumeItemSchema>
 export type ResumeSectionSchema = z.infer<typeof resumeSectionSchema>
 export type ResumeContentSchema = z.infer<typeof resumeContentSchema>
 
+// ── Resume Agent State Schema ─────────────────────────────────────────────
+// Shared state between the CopilotKit agent and the UI: the full resume plus
+// the ids of sections/items the agent touched in the last turn.
+
+export const resumeAgentStateSchema = z.object({
+  resume: resumeContentSchema,
+  highlights: z
+    .array(z.string())
+    .default([])
+    .describe('Ids of sections/items changed or expanded in the last turn'),
+})
+export type ResumeAgentState = z.infer<typeof resumeAgentStateSchema>
+
 // ── Resume Sandbox Patch Schema ───────────────────────────────────────────
 // The model emits a patch against the current sandbox, not a full resume.
 // The client merges the patch into the local sandbox and renders the result.
-
-export const resumeSectionIdSchema = z
-  .string()
-  .min(2)
-  .max(80)
-  .regex(/^[a-z0-9][a-z0-9-]*$/, {
-    message:
-      'Section id must be kebab-case, lowercase, and start with a letter or number (e.g. "summary", "experience-acme-2023", "skills-frontend").',
-  })
-  .describe(
-    'Stable kebab-case id for the section. Reuse the same id when updating an existing section. New ids should be descriptive and unique within the sandbox.',
-  )
 
 export const resumeSectionWithIdSchema = z.object({
   id: resumeSectionIdSchema,

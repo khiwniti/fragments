@@ -122,11 +122,13 @@ function nextOrder(sections: SandboxSection[]): number {
 function normalizeItems(items: ResumeItemSchema[] | undefined): ResumeItemSchema[] | undefined {
   if (!items) return undefined
   return items.map((item) => ({
+    id: item.id,
     label: item.label ?? '',
     value: item.value,
     detail: item.detail,
     tags: item.tags,
     url: item.url,
+    children: normalizeItems(item.children),
   }))
 }
 

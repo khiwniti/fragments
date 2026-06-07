@@ -36,6 +36,8 @@
     ".next/dev/types/**/*.ts"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "portfolio-mcp-ui",
+    "share-state-gen-ui"
   ]
 }

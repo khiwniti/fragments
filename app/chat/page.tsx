@@ -3,16 +3,18 @@
 export const dynamic = 'force-dynamic'
 
 import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
-import Link from 'next/link'
 import { useSearchParams } from 'next/navigation'
 import { Chat } from '@/components/chat'
 import { ChatInput } from '@/components/chat-input'
 import { ChatPicker } from '@/components/chat-picker'
 import { ChatSettings } from '@/components/chat-settings'
+import { NavBar } from '@/components/navbar'
 import { Preview } from '@/components/preview'
 import { ResumePreview } from '@/components/resume-preview'
+import { AuthDialog } from '@/components/auth-dialog'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth'
+import { supabase } from '@/lib/supabase'
 import { Message, toAISDKMessages, toMessageImage } from '@/lib/messages'
 import { LLMModelConfig } from '@/lib/models'
 import modelsList from '@/lib/models.json'
@@ -23,6 +25,7 @@ import { ExecutionResult } from '@/lib/types'
 import { DeepPartial } from 'ai'
 import { experimental_useObject as useObject } from '@ai-sdk/react'
 import { useLocalStorage } from 'usehooks-ts'
+import { Session } from '@supabase/supabase-js'
 import { MessageSquare, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   getOrCreateAnonId,
@@ -122,7 +125,12 @@ function ChatPageInner() {
   const [showArtifactPanel, setShowArtifactPanel] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [isRateLimited, setIsRateLimited] = useState(false)
-  const { session, userTeam } = useAuth(() => {}, () => {})
+  const [isAuthDialogOpen, setAuthDialog] = useState(false)
+  const [authView, setAuthView] = useState<import('@/components/auth').ViewType>('sign_in')
+  const { session, userTeam } = useAuth(
+    (v) => setAuthDialog(v),
+    (v) => setAuthView(v),
+  )
 
   const filteredModels = modelsList.models.filter((model) => {
     if (process.env.NEXT_PUBLIC_HIDE_LOCAL_MODELS) {
@@ -452,6 +460,27 @@ function ChatPageInner() {
     }
   }
 
+  function handleClearChat() {
+    if (messages.length === 0) return
+    const confirmed = window.confirm(
+      'Clear the current conversation? This will discard the message thread and any unsaved sandbox changes.',
+    )
+    if (!confirmed) return
+    handleNewConversation()
+  }
+
+  function signOut() {
+    supabase?.auth.signOut()
+  }
+
+  function handleSocialClick(target: 'github' | 'x') {
+    if (target === 'github') {
+      window.open('https://github.com/getintheq', '_blank')
+    } else if (target === 'x') {
+      window.open('https://x.com/ikkyuu01', '_blank')
+    }
+  }
+
   function handleChipClick(prompt: string) {
     if (isLoading) return
     setIsRateLimited(false)
@@ -515,24 +544,32 @@ function ChatPageInner() {
   const showRightPanel = isResumeMode ? (showArtifactPanel && hasResumeArtifact) : !!fragment
 
   return (
-    <main className="flex h-screen bg-background">
-      {/* Conversation Sidebar */}
-      <aside
-        className={`border-r border-border bg-card flex-shrink-0 transition-all duration-300 overflow-hidden ${
-          sidebarOpen ? 'w-64' : 'w-0'
-        }`}
-        aria-label="Conversation history"
-      >
-        <div className="w-64 h-full flex flex-col">
-          <div className="p-3 border-b border-border">
-            <Link href="/" className="flex items-center gap-2 mb-3">
-              <span className="text-lg font-bold">khiw<span className="text-primary">.dev</span></span>
-            </Link>
-            <Button variant="outline" className="w-full gap-2" size="sm" onClick={handleNewConversation}>
-              <Plus className="w-4 h-4" />
-              New chat
-            </Button>
-          </div>
+    <div className="flex flex-col h-screen bg-background">
+      <NavBar
+        session={session as Session | null}
+        showLogin={() => setAuthDialog(true)}
+        signOut={signOut}
+        onSocialClick={handleSocialClick}
+        onClear={handleClearChat}
+        canClear={messages.length > 0}
+        onUndo={() => {}}
+        canUndo={false}
+      />
+      <main className="flex flex-1 min-h-0">
+        {/* Conversation Sidebar */}
+        <aside
+          className={`border-r border-border bg-card flex-shrink-0 transition-all duration-300 overflow-hidden ${
+            sidebarOpen ? 'w-64' : 'w-0'
+          }`}
+          aria-label="Conversation history"
+        >
+          <div className="w-64 h-full flex flex-col">
+            <div className="p-3 border-b border-border">
+              <Button variant="outline" className="w-full gap-2" size="sm" onClick={handleNewConversation}>
+                <Plus className="w-4 h-4" />
+                New chat
+              </Button>
+            </div>
 
           <div className="flex-1 overflow-y-auto p-2 space-y-1">
             {conversations.map((conv) => (
@@ -588,7 +625,7 @@ function ChatPageInner() {
 
       {/* Main content */}
       <div className="flex-1 flex flex-col min-w-0">
-        {/* Top bar */}
+        {/* Sub-bar: chat-specific controls only (sidebar toggle + model picker + settings). */}
         <div className="flex items-center justify-between p-3 border-b border-border">
           <div className="flex items-center gap-2">
             <Button
@@ -619,14 +656,6 @@ function ChatPageInner() {
                 onUseMorphApplyChange={setUseMorphApply}
               />
             </div>
-          </div>
-          <div className="flex items-center gap-2">
-            <Link href="/blog">
-              <Button variant="ghost" size="sm">Blog</Button>
-            </Link>
-            <Link href="/admin">
-              <Button variant="ghost" size="sm">Admin</Button>
-            </Link>
           </div>
         </div>
 
@@ -700,5 +729,14 @@ function ChatPageInner() {
         </div>
       </div>
     </main>
+    {supabase && (
+      <AuthDialog
+        open={isAuthDialogOpen}
+        setOpen={setAuthDialog}
+        supabase={supabase}
+        view={authView}
+      />
+    )}
+    </div>
   )
 }

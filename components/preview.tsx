@@ -13,7 +13,7 @@ import { FragmentSchema } from '@/lib/schema'
 import { getTemplateId } from '@/lib/templates'
 import { ExecutionResult, ExecutionResultWeb } from '@/lib/types'
 import { DeepPartial } from 'ai'
-import { ChevronsRight, LoaderCircle } from 'lucide-react'
+import { ChevronsRight, LoaderCircle, PanelRightClose } from 'lucide-react'
 import { Dispatch, SetStateAction } from 'react'
 
 export function Preview({
@@ -65,7 +65,7 @@ export function Preview({
                   onClick={onClose}
                   aria-label="Close panel"
                 >
-                  <ChevronsRight className="h-5 w-5" aria-hidden="true" />
+                  <PanelRightClose className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Close panel</TooltipContent>

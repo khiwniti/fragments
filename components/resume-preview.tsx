@@ -11,7 +11,7 @@ import {
   TooltipTrigger,
 } from '@/components/ui/tooltip'
 import type { SandboxView } from '@/lib/resume-sandbox'
-import { ChevronsRight, LoaderCircle, Printer } from 'lucide-react'
+import { ChevronsRight, LoaderCircle, PanelRightClose, Printer } from 'lucide-react'
 import { Dispatch, SetStateAction, useCallback } from 'react'
 
 export function ResumePreview({
@@ -51,7 +51,7 @@ export function ResumePreview({
                   onClick={onClose}
                   aria-label="Close panel"
                 >
-                  <ChevronsRight className="h-5 w-5" aria-hidden="true" />
+                  <PanelRightClose className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
               <TooltipContent>Close panel</TooltipContent>

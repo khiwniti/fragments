@@ -128,3 +128,17 @@
     margin: 0;
   }
 }
+
+/* ── Resume print artifact isolation ─────────────────────────────────── */
+@media print {
+  body * { visibility: hidden; }
+  #resume-print-root,
+  #resume-print-root * { visibility: visible; }
+  #resume-print-root {
+    position: absolute;
+    inset: 0 auto auto 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+  }
+}

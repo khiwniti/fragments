@@ -599,9 +599,9 @@ function ChatPageInner() {
                   type="button"
                   onClick={() => handleDeleteConversation(conv.id)}
                   aria-label={`Delete conversation: ${conv.title}`}
-                  className="opacity-0 group-hover:opacity-100 group-focus-within:opacity-100 p-1 text-muted-foreground hover:text-destructive focus-visible:opacity-100 focus-visible:text-destructive transition-opacity"
+                  className="opacity-40 hover:opacity-100 focus-visible:opacity-100 p-1 text-muted-foreground hover:text-destructive focus-visible:text-destructive transition-opacity"
                 >
-                  <Trash2 className="w-3 h-3" />
+                  <Trash2 className="w-3.5 h-3.5" />
                 </button>
               </div>
             ))}

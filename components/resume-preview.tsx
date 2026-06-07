@@ -66,7 +66,7 @@ export function ResumePreview({
                 {isChatLoading && (
                   <LoaderCircle
                     strokeWidth={3}
-                    className="h-3 w-3 animate-spin"
+                    className="h-3 w-3 animate-spin motion-reduce:animate-none"
                   />
                 )}
                 Preview

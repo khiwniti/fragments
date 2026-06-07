@@ -3,7 +3,7 @@ import { FragmentSchema, ResumePatchSchema } from '@/lib/schema'
 import { ExecutionResult } from '@/lib/types'
 import { DeepPartial } from 'ai'
 import { LoaderIcon, Terminal, FileText, PanelRight, Plus, RefreshCw, ArrowUpDown, Trash2 } from 'lucide-react'
-import { useEffect } from 'react'
+import { useEffect, useRef } from 'react'
 import { StarterChip } from '@/lib/profile'
 import { partialDiff, type SandboxView } from '@/lib/resume-sandbox'
 
@@ -29,12 +29,19 @@ export function Chat({
   resumeView?: SandboxView
   onOpenArtifact?: () => void
 }) {
+  // Scroll the chat container to the bottom whenever a new message lands.
+  // Track the last message length in a ref so the effect only re-runs when
+  // the count actually changes — not on every input keystroke (which
+  // re-renders this component via the lift-up pattern in app/chat/page.tsx).
+  const lastLengthRef = useRef(messages.length)
   useEffect(() => {
+    if (messages.length === lastLengthRef.current) return
+    lastLengthRef.current = messages.length
     const chatContainer = document.getElementById('chat-container')
     if (chatContainer) {
       chatContainer.scrollTop = chatContainer.scrollHeight
     }
-  }, [JSON.stringify(messages)])
+  }, [messages.length])
 
   const showChips = isResumeMode && messages.length === 0 && !isLoading
 
@@ -78,7 +85,6 @@ export function Chat({
           ? (message.object as DeepPartial<ResumePatchSchema> | undefined)
           : undefined
         const diff = patch ? partialDiff(patch) : null
-        const sandboxIsEmpty = !resumeView || resumeView.sections.length === 0
         const showSandboxCard = isResumeMode && resumeView && (isLastMessage || resumeView.sections.length > 0)
         const showDiffCard = isResumeMode && isLastMessage && isAssistant && diff && diff.hasChanges
         return (
@@ -171,7 +177,6 @@ export function Chat({
                         {diff.reordered} reordered
                       </span>
                     )}
-                    {sandboxIsEmpty && 'no-op patch'}
                   </span>
                 </div>
               </div>
@@ -204,7 +209,7 @@ export function Chat({
       })}
       {isLoading && (
         <div className="flex items-center gap-2 self-start text-sm text-muted-foreground px-1" role="status" aria-live="polite">
-          <LoaderIcon strokeWidth={2} className="animate-spin w-4 h-4" />
+          <LoaderIcon strokeWidth={2} className="animate-spin motion-reduce:animate-none w-4 h-4" />
           <span>Generating...</span>
         </div>
       )}

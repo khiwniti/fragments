@@ -80,7 +80,7 @@ export function Preview({
                 {isChatLoading && (
                   <LoaderCircle
                     strokeWidth={3}
-                    className="h-3 w-3 animate-spin"
+                    className="h-3 w-3 animate-spin motion-reduce:animate-none"
                   />
                 )}
                 Code
@@ -94,7 +94,7 @@ export function Preview({
                 {isPreviewLoading && (
                   <LoaderCircle
                     strokeWidth={3}
-                    className="h-3 w-3 animate-spin"
+                    className="h-3 w-3 animate-spin motion-reduce:animate-none"
                   />
                 )}
               </TabsTrigger>

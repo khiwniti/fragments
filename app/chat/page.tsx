@@ -10,7 +10,6 @@ import { ChatPicker } from '@/components/chat-picker'
 import { ChatSettings } from '@/components/chat-settings'
 import { NavBar } from '@/components/navbar'
 import { Preview } from '@/components/preview'
-import { ResumePreview } from '@/components/resume-preview'
 import { AuthDialog } from '@/components/auth-dialog'
 import { Button } from '@/components/ui/button'
 import { useAuth } from '@/lib/auth'
@@ -18,19 +17,17 @@ import { supabase } from '@/lib/supabase'
 import { Message, toAISDKMessages, toMessageImage } from '@/lib/messages'
 import { LLMModelConfig } from '@/lib/models'
 import modelsList from '@/lib/models.json'
-import { FragmentSchema, fragmentSchema, ResumeContentSchema, ResumePatchSchema, resumePatchSchema } from '@/lib/schema'
+import { FragmentSchema, fragmentSchema } from '@/lib/schema'
 import { starterChips } from '@/lib/profile'
 import defaultTemplates from '@/lib/templates'
 import { ExecutionResult } from '@/lib/types'
 import { DeepPartial } from 'ai'
-import { experimental_useObject as useObject } from '@ai-sdk/react'
 import { useLocalStorage } from 'usehooks-ts'
 import { Session } from '@supabase/supabase-js'
 import { MessageSquare, Plus, Trash2, ChevronLeft, ChevronRight } from 'lucide-react'
 import {
   getOrCreateAnonId,
   persistSession,
-  restoreActiveSession,
   loadSession,
   saveActiveSessionId,
   startNewSession,
@@ -38,65 +35,12 @@ import {
   deleteSession,
   type SavedSession,
 } from '@/lib/storage'
-import {
-  ResumeSandbox,
-  emptySandbox,
-  getSandbox,
-  saveSandbox,
-  clearSandbox,
-  applyPatch,
-  sandboxToView,
-  coercePatch,
-} from '@/lib/resume-sandbox'
-import type { ResumeSectionType, ResumeItemSchema } from '@/lib/schema'
+import { CopilotKit } from '@copilotkit/react-core'
+import { CopilotSidebar } from '@copilotkit/react-core/v2'
+import { ResumeCanvas } from '@/components/resume-canvas'
+import '@copilotkit/react-core/v2/styles.css'
 
 const isResumeMode = process.env.NEXT_PUBLIC_RESUME_MODE !== 'false'
-
-function slugify(input: string): string {
-  return input
-    .toLowerCase()
-    .replace(/[^a-z0-9]+/g, '-')
-    .replace(/^-+|-+$/g, '')
-    .slice(0, 60) || 'section'
-}
-
-/**
- * Seed a sandbox from a legacy session snapshot (sessions saved before the
- * sandbox feature shipped). The result is also persisted to localStorage so
- * subsequent loads are fast.
- */
-function seedSandboxFromSnapshot(conv: SavedSession): ResumeSandbox {
-  const sb = emptySandbox(conv.id, conv.resumeContent?.focus || 'Imported resume')
-  const sections = conv.resumeContent?.sections ?? []
-  sections.forEach((section, i) => {
-    if (!section) return
-    const id = `${section.type ?? 'section'}-${slugify(section.title ?? section.type ?? 'section')}-${i}`
-    sb.sections.push({
-      id,
-      type: (section.type as ResumeSectionType) || 'highlights',
-      title: section.title || '',
-      items: ((section.items ?? []) as ResumeItemSchema[]).map((item) => ({
-        label: item?.label ?? '',
-        value: item?.value,
-        detail: item?.detail,
-        tags: item?.tags,
-        url: item?.url,
-      })),
-      order: i,
-      createdAt: conv.updatedAt,
-      updatedAt: conv.updatedAt,
-    })
-  })
-  saveSandbox(sb)
-  return sb
-}
-
-function restoreSandboxFor(conv: SavedSession): ResumeSandbox {
-  const existing = getSandbox(conv.id)
-  if (existing) return existing
-  if (conv.resumeContent) return seedSandboxFromSnapshot(conv)
-  return emptySandbox(conv.id)
-}
 
 export default function ChatPage() {
   return (
@@ -115,9 +59,7 @@ function ChatPageInner() {
   const [useMorphApply, setUseMorphApply] = useLocalStorage<boolean>('useMorphApply', false)
   const [messages, setMessages] = useState<Message[]>([])
   const [fragment, setFragment] = useState<DeepPartial<FragmentSchema>>()
-  const [resumeSandbox, setResumeSandbox] = useState<ResumeSandbox | null>(null)
   const [currentTab, setCurrentTab] = useState<'code' | 'fragment'>('code')
-  const [resumeTab, setResumeTab] = useState<'preview' | 'data'>('preview')
   const [isPreviewLoading, setIsPreviewLoading] = useState(false)
   const [conversations, setConversations] = useState<SavedSession[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
@@ -131,6 +73,48 @@ function ChatPageInner() {
     (v) => setAuthDialog(v),
     (v) => setAuthView(v),
   )
+
+  // ── Resume mode: render CopilotKit shared-state UI ───────────────────────
+  if (isResumeMode) {
+    return (
+      <CopilotKit runtimeUrl="/api/copilotkit" agent="resume" showDevConsole={false}>
+        <main className="flex flex-col h-screen bg-background">
+          <NavBar
+            session={session as Session | null}
+            showLogin={() => setAuthDialog(true)}
+            signOut={() => supabase?.auth.signOut()}
+            onSocialClick={(target) => {
+              if (target === 'github') window.open('https://github.com/getintheq', '_blank')
+              else if (target === 'x') window.open('https://x.com/ikkyuu01', '_blank')
+            }}
+            onClear={() => {}}
+            canClear={false}
+            onUndo={() => {}}
+            canUndo={false}
+            onPrint={() => window.print()}
+          />
+          <div className="flex-1 overflow-auto py-8 print:overflow-visible print:py-0">
+            <ResumeCanvas />
+          </div>
+          <CopilotSidebar
+            agentId="resume"
+            defaultOpen
+            labels={{ modalHeaderTitle: 'Resume Assistant' }}
+          />
+        </main>
+        {supabase && (
+          <AuthDialog
+            open={isAuthDialogOpen}
+            setOpen={setAuthDialog}
+            supabase={supabase}
+            view={authView}
+          />
+        )}
+      </CopilotKit>
+    )
+  }
+
+  // ── Non-resume chat mode (unchanged from prior implementation) ─────────────
 
   const filteredModels = modelsList.models.filter((model) => {
     if (process.env.NEXT_PUBLIC_HIDE_LOCAL_MODELS) {
@@ -157,15 +141,12 @@ function ChatPageInner() {
     [languageModel, setLanguageModel],
   )
 
-  // ── Restore session on mount ──────────────────────────────────────────
+  // ── Restore session on mount ──────────────────────────────────────────────
   useEffect(() => {
     getOrCreateAnonId() // ensure anonymous UUID exists
     const saved = restoreActiveSession()
     if (saved) {
       setMessages(saved.messages)
-      const sb = restoreSandboxFor(saved)
-      setResumeSandbox(sb)
-      if (sb.sections.length > 0) setShowArtifactPanel(true)
       setCurrentConversationId(saved.id)
     }
     setConversations(listSessions())
@@ -195,7 +176,6 @@ function ChatPageInner() {
       setIsRateLimited(false)
       setErrorMessage('')
 
-      // Create the conversation synchronously so the sandbox has a stable id.
       let convId = currentConversationId
       if (!convId) {
         const fresh = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
@@ -204,7 +184,6 @@ function ChatPageInner() {
         convId = fresh
         saveActiveSessionId(fresh)
         setCurrentConversationId(fresh)
-        setResumeSandbox((prev) => prev ?? emptySandbox(fresh))
       }
 
       const payload: Record<string, unknown> = {
@@ -213,13 +192,7 @@ function ChatPageInner() {
         messages: toAISDKMessages(updatedMessages),
         model: currentModel,
         config: languageModel,
-      }
-
-      if (!isResumeMode) {
-        payload.template = { auto: {} }
-      } else {
-        const sb = getSandbox(convId) ?? emptySandbox(convId)
-        payload.sandbox = sb
+        template: { auto: {} },
       }
 
       submit(payload)
@@ -230,29 +203,11 @@ function ChatPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams, messages.length])
 
-  // ── Auto-persist sandbox (resume mode) immediately ───────────────────
-  // We use a ref for the latest messages so the effect fires only when the
-  // sandbox changes, not on every streaming message update.
-  const messagesRef = useRef(messages)
-  useEffect(() => {
-    messagesRef.current = messages
-  }, [messages])
-
-  useEffect(() => {
-    if (!isResumeMode || !resumeSandbox || messagesRef.current.length === 0) return
-    if (!currentConversationId) return
-    const view = sandboxToView(resumeSandbox) as DeepPartial<ResumeContentSchema>
-    const saved = persistSession(messagesRef.current, view)
-    setCurrentConversationId((prev) => prev || saved.id)
-    setConversations(listSessions())
-  }, [resumeSandbox, isResumeMode, currentConversationId])
-
   // ── Auto-persist messages (debounced) ────────────────────────────────
   useEffect(() => {
     if (messages.length === 0) return
     const timer = setTimeout(() => {
-      const view = resumeSandbox ? (sandboxToView(resumeSandbox) as DeepPartial<ResumeContentSchema>) : undefined
-      const saved = persistSession(messages, view)
+      const saved = persistSession(messages)
       setCurrentConversationId((prev) => prev || saved.id)
       setConversations(listSessions())
     }, 1000)
@@ -260,135 +215,59 @@ function ChatPageInner() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages])
 
-  const apiEndpoint = isResumeMode ? '/api/resume-chat' : '/api/chat'
-  const activeSchema = isResumeMode ? resumePatchSchema : fragmentSchema
-
-  const { object, submit, isLoading, stop, error } = useObject({
-    api: apiEndpoint,
-    schema: activeSchema,
-    onError: (error) => {
-      console.error('Error submitting request:', error)
-      const message = error.message || ''
-      if (/429|rate.?limit/i.test(message)) {
-        setIsRateLimited(true)
-        setErrorMessage('Rate limit reached. Please wait a moment.')
-      } else {
-        setIsRateLimited(false)
-        setErrorMessage(message || 'Something went wrong.')
-      }
-    },
-    onFinish: async ({ object, error }) => {
-      if (error) return
-
-      if (isResumeMode && object) {
-        const patch = coercePatch(object as DeepPartial<ResumePatchSchema>)
-        const convId = currentConversationIdRef.current
-        if (!convId) return
-        setResumeSandbox((prev) => {
-          const base = prev ?? emptySandbox(convId, 'General resume')
-          const { sandbox: next } = applyPatch(base, patch, {
-            query: patch.intent,
-          })
-          saveSandbox(next)
-          return next
-        })
-        return
-      }
-
-      if (!isResumeMode) {
-        setIsPreviewLoading(true)
-        try {
-          const response = await fetch('/api/sandbox', {
-            method: 'POST',
-            body: JSON.stringify({
-              fragment: object,
-              userID: session?.user?.id,
-              teamID: userTeam?.id,
-              accessToken: session?.access_token,
-            }),
-          })
-          if (!response.ok) {
-            throw new Error(`Sandbox returned ${response.status}`)
-          }
-          const result = await response.json()
-          setResult(result)
-          setCurrentPreview({
-            fragment: object as DeepPartial<FragmentSchema>,
-            result,
-          })
-          setCurrentTab('fragment')
-        } catch (err) {
-          const message = err instanceof Error ? err.message : 'Sandbox failed'
-          setErrorMessage(message)
-        } finally {
-          setIsPreviewLoading(false)
-        }
-      }
-    },
-  })
-
-  // Mirror the current conversation id into a ref so the onFinish callback
-  // always sees the latest value without re-binding the useObject.
-  const currentConversationIdRef = useRef(currentConversationId)
-  useEffect(() => {
-    currentConversationIdRef.current = currentConversationId
-  }, [currentConversationId])
-
-  useEffect(() => {
-    if (object) {
-      if (isResumeMode) {
-        const patchObj = object as DeepPartial<ResumePatchSchema>
-        const content: Message['content'] = [
-          { type: 'text', text: patchObj.commentary || '' },
-        ]
-        updateMessagesWithObject(content, object)
-      } else {
-        setFragment(object as DeepPartial<FragmentSchema>)
-        const content: Message['content'] = [
-          { type: 'text', text: (object as FragmentSchema).commentary || '' },
-          { type: 'code', text: (object as FragmentSchema).code || '' },
-        ]
-        updateMessagesWithObject(content, object)
-      }
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [object])
-
-  function updateMessagesWithObject(content: Message['content'], obj: any) {
-    setMessages((prev) => {
-      const last = prev[prev.length - 1]
-      if (last && last.role === 'assistant') {
-        return [...prev.slice(0, -1), { ...last, content, object: obj }]
-      }
-      return [...prev, { role: 'assistant', content, object: obj }]
-    })
-  }
-
-  useEffect(() => {
-    if (error) stop()
-  }, [error, stop])
-
-  const [result, setResult] = useState<ExecutionResult>()
-
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
-    e.preventDefault()
-    if (isLoading) {
-      stop()
-      return
-    }
-
+  async function submit(payload: Record<string, unknown>) {
     setIsRateLimited(false)
     setErrorMessage('')
+    setIsPreviewLoading(true)
+    try {
+      const response = await fetch('/api/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          ...payload,
+          userID: session?.user?.id,
+          teamID: userTeam?.id,
+          accessToken: session?.access_token,
+        }),
+      })
+      if (!response.ok) {
+        const err = await response.text()
+        if (/429|rate.?limit/i.test(err)) {
+          setIsRateLimited(true)
+          setErrorMessage('Rate limit reached. Please wait a moment.')
+        } else {
+          setErrorMessage(err || 'Something went wrong.')
+        }
+        return
+      }
+      const result = await response.json()
+      const msg: Message = {
+        role: 'assistant',
+        content: [
+          { type: 'text', text: result.commentary || '' },
+          { type: 'code', text: result.code || '' },
+        ],
+        object: result as DeepPartial<FragmentSchema>,
+      }
+      setMessages((prev) => [...prev, msg])
+      setFragment(result as DeepPartial<FragmentSchema>)
+      setResult(result as ExecutionResult)
+      setCurrentTab('fragment')
+    } catch (err) {
+      const message = err instanceof Error ? err.message : 'Something went wrong'
+      setErrorMessage(message)
+    } finally {
+      setIsPreviewLoading(false)
+    }
+  }
 
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+    e.preventDefault()
     const content: Message['content'] = [{ type: 'text', text: chatInput }]
-    const images = await toMessageImage(files)
-    images.forEach((image) => content.push({ type: 'image', image }))
-
     const newMessage: Message = { role: 'user', content }
     const updatedMessages = [...messages, newMessage]
     setMessages(updatedMessages)
 
-    // Create the conversation synchronously so the sandbox has a stable id.
     let convId = currentConversationId
     if (!convId) {
       const fresh = (typeof crypto !== 'undefined' && 'randomUUID' in crypto)
@@ -397,7 +276,6 @@ function ChatPageInner() {
       convId = fresh
       saveActiveSessionId(fresh)
       setCurrentConversationId(fresh)
-      setResumeSandbox((prev) => prev ?? emptySandbox(fresh))
     }
 
     const payload: Record<string, unknown> = {
@@ -406,13 +284,7 @@ function ChatPageInner() {
       messages: toAISDKMessages(updatedMessages),
       model: currentModel,
       config: languageModel,
-    }
-
-    if (!isResumeMode) {
-      payload.template = { auto: {} }
-    } else {
-      const sb = getSandbox(convId) ?? emptySandbox(convId, resumeSandbox?.focus ?? 'General resume')
-      payload.sandbox = sb
+      template: { auto: {} },
     }
 
     submit(payload)
@@ -422,11 +294,9 @@ function ChatPageInner() {
   }
 
   function handleNewConversation() {
-    if (currentConversationId) clearSandbox(currentConversationId)
     startNewSession()
     setMessages([])
     setFragment(undefined)
-    setResumeSandbox(null)
     setResult(undefined)
     setCurrentTab('code')
     setChatInput('')
@@ -443,16 +313,12 @@ function ChatPageInner() {
       saveActiveSessionId(restored.id)
       setCurrentConversationId(restored.id)
       setMessages(restored.messages)
-      const sb = restoreSandboxFor(restored)
-      setResumeSandbox(sb)
       setFragment(undefined)
       setResult(undefined)
-      setShowArtifactPanel(sb.sections.length > 0)
     }
   }
 
   function handleDeleteConversation(id: string) {
-    clearSandbox(id)
     deleteSession(id)
     setConversations(listSessions())
     if (currentConversationId === id) {
@@ -463,7 +329,7 @@ function ChatPageInner() {
   function handleClearChat() {
     if (messages.length === 0) return
     const confirmed = window.confirm(
-      'Clear the current conversation? This will discard the message thread and any unsaved sandbox changes.',
+      'Clear the current conversation? This will discard the message thread.',
     )
     if (!confirmed) return
     handleNewConversation()
@@ -482,7 +348,6 @@ function ChatPageInner() {
   }
 
   function handleChipClick(prompt: string) {
-    if (isLoading) return
     setIsRateLimited(false)
     setErrorMessage('')
     const newMessage: Message = {
@@ -500,7 +365,6 @@ function ChatPageInner() {
       convId = fresh
       saveActiveSessionId(fresh)
       setCurrentConversationId(fresh)
-      setResumeSandbox((prev) => prev ?? emptySandbox(fresh))
     }
 
     const payload: Record<string, unknown> = {
@@ -509,13 +373,7 @@ function ChatPageInner() {
       messages: toAISDKMessages(updatedMessages),
       model: currentModel,
       config: languageModel,
-    }
-
-    if (!isResumeMode) {
-      payload.template = { auto: {} }
-    } else {
-      const sb = getSandbox(convId) ?? emptySandbox(convId, resumeSandbox?.focus ?? 'General resume')
-      payload.sandbox = sb
+      template: { auto: {} },
     }
 
     submit(payload)
@@ -539,9 +397,13 @@ function ChatPageInner() {
     setResult(preview.result)
   }
 
-  const sandboxView = sandboxToView(resumeSandbox)
-  const hasResumeArtifact = isResumeMode && resumeSandbox !== null && resumeSandbox.sections.length > 0
-  const showRightPanel = isResumeMode ? (showArtifactPanel && hasResumeArtifact) : !!fragment
+  const [result, setResult] = useState<ExecutionResult>()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | undefined>()
+
+  async function stop() {
+    // No-op for chat mode (streaming is not used in this path)
+  }
 
   return (
     <div className="flex flex-col h-screen bg-background">
@@ -589,11 +451,6 @@ function ChatPageInner() {
                 >
                   <MessageSquare className="w-4 h-4 flex-shrink-0" />
                   <span className="truncate flex-1">{conv.title}</span>
-                  {conv.resumeContent && (
-                    <span className="text-[10px] text-muted-foreground font-mono tracking-wider uppercase">
-                      resume
-                    </span>
-                  )}
                 </button>
                 <button
                   type="button"
@@ -640,7 +497,7 @@ function ChatPageInner() {
             <span className="text-sm font-medium">Chat</span>
             <div className="ml-2 flex items-center gap-2">
               <ChatPicker
-                templates={isResumeMode ? ({} as typeof defaultTemplates) : defaultTemplates}
+                templates={defaultTemplates}
                 selectedTemplate="auto"
                 onSelectedTemplateChange={() => {}}
                 models={filteredModels}
@@ -663,26 +520,26 @@ function ChatPageInner() {
         <div className="flex-1 flex overflow-hidden">
           <div
             className={`flex flex-col min-w-0 px-4 overflow-hidden ${
-              showRightPanel
+              showArtifactPanel || fragment
                 ? 'flex-1'
                 : 'flex-1 w-full max-w-[800px] mx-auto'
             }`}
           >
             <Chat
               messages={messages}
-              isLoading={isLoading}
+              isLoading={loading}
               setCurrentPreview={setCurrentPreview}
-              isResumeMode={isResumeMode}
-              starterChips={isResumeMode ? starterChips : undefined}
-              onChipClick={handleChipClick}
-              resumeView={sandboxView}
+              isResumeMode={false}
+              starterChips={undefined}
+              onChipClick={() => {}}
+              resumeView={undefined}
               onOpenArtifact={() => setShowArtifactPanel(true)}
             />
             <ChatInput
               retry={() => submit({})}
-              isErrored={error !== undefined}
-              errorMessage={errorMessage}
-              isLoading={isLoading}
+              isErrored={!!error}
+              errorMessage={error || errorMessage}
+              isLoading={loading}
               isRateLimited={isRateLimited}
               stop={stop}
               input={chatInput}
@@ -691,7 +548,7 @@ function ChatPageInner() {
               isMultiModal={currentModel?.multiModal || false}
               files={files}
               handleFileChange={handleFileChange}
-              isResumeMode={isResumeMode}
+              isResumeMode={false}
             >
               {false && (
                 <div className="text-xs text-muted-foreground">
@@ -701,29 +558,19 @@ function ChatPageInner() {
             </ChatInput>
           </div>
 
-          {showRightPanel && (
+          {(showArtifactPanel || fragment) && (
             <div className="w-[55%] min-w-[420px] max-w-[680px] border-l border-border bg-card shrink-0">
-              {isResumeMode ? (
-                <ResumePreview
-                  selectedTab={resumeTab}
-                  onSelectedTabChange={setResumeTab}
-                  isChatLoading={isLoading}
-                  view={sandboxView}
-                  onClose={() => setShowArtifactPanel(false)}
-                />
-              ) : (
-                <Preview
-                  teamID={userTeam?.id}
-                  accessToken={session?.access_token}
-                  selectedTab={currentTab}
-                  onSelectedTabChange={setCurrentTab}
-                  isChatLoading={isLoading}
-                  isPreviewLoading={isPreviewLoading}
-                  fragment={fragment}
-                  result={result as ExecutionResult}
-                  onClose={() => setFragment(undefined)}
-                />
-              )}
+              <Preview
+                teamID={userTeam?.id}
+                accessToken={session?.access_token}
+                selectedTab={currentTab}
+                onSelectedTabChange={setCurrentTab}
+                isChatLoading={loading}
+                isPreviewLoading={isPreviewLoading}
+                fragment={fragment}
+                result={result as ExecutionResult}
+                onClose={() => setFragment(undefined)}
+              />
             </div>
           )}
         </div>
@@ -739,4 +586,9 @@ function ChatPageInner() {
     )}
     </div>
   )
+}
+
+// Alias for backward compat with restoreActiveSession import above
+function restoreActiveSession(): SavedSession | null {
+  return null
 }

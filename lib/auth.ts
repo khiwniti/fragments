@@ -42,7 +42,16 @@ export function useAuth(
       return setSession({ user: { email: 'demo@khiw.dev' } } as Session)
     }
 
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    supabase.auth.getSession().then(async ({ data: { session } }) => {
+      if (!session && supabase) {
+        try {
+          const { data: anonData } = await supabase.auth.signInAnonymously()
+          if (anonData?.session) session = anonData.session
+          else console.warn('[auth] Anonymous sign-in failed; falling back to demo session')
+        } catch (err) {
+          console.warn('[auth] Anonymous sign-in error:', err)
+        }
+      }
       setSession(session)
       if (session) {
         getUserTeam(session).then(setUserTeam)

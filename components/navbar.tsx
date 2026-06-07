@@ -32,6 +32,7 @@ export function NavBar({
   onSocialClick,
   onUndo,
   canUndo,
+  onPrint,
 }: {
   session: Session | null
   showLogin: () => void
@@ -41,6 +42,7 @@ export function NavBar({
   onSocialClick: (target: 'github' | 'x') => void
   onUndo?: () => void
   canUndo?: boolean
+  onPrint?: () => void
 }) {
   return (
     <nav className="w-full flex bg-background py-4">
@@ -109,6 +111,22 @@ export function NavBar({
             <TooltipContent>Clear chat</TooltipContent>
           </Tooltip>
         </TooltipProvider>
+        {onPrint && (
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onPrint}
+                >
+                  <span className="text-xs font-mono">Print</span>
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Print resume</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         {session ? (
           <DropdownMenu>
             <TooltipProvider>

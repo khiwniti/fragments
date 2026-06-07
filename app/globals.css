@@ -98,7 +98,10 @@
   to { opacity: 1; transform: none; }
 }
 
-/* ── A4 resume print path ─────────────────────────────────────────────
+/* ── A4 resume print path + ResumeCanvas print isolation ───────────────────
+   A single merged @media print block serving both:
+   - Non-resume mode: .a4-print-root → A4 pager pages
+   - Resume mode: #resume-print-root → ResumeCanvas artifact
    Print only the .a4-sheet pages: hide everything, re-show the pager
    subtree, strip the screen scale transform, one sheet per A4 page. */
 @media print {
@@ -106,10 +109,13 @@
     visibility: hidden;
   }
   .a4-print-root,
-  .a4-print-root * {
+  .a4-print-root *,
+  #resume-print-root,
+  #resume-print-root * {
     visibility: visible;
   }
-  .a4-print-root {
+  .a4-print-root,
+  #resume-print-root {
     position: absolute;
     inset: 0;
     overflow: visible !important;
@@ -126,19 +132,5 @@
   @page {
     size: A4;
     margin: 0;
-  }
-}
-
-/* ── Resume print artifact isolation ─────────────────────────────────── */
-@media print {
-  body * { visibility: hidden; }
-  #resume-print-root,
-  #resume-print-root * { visibility: visible; }
-  #resume-print-root {
-    position: absolute;
-    inset: 0 auto auto 0;
-    width: 100%;
-    margin: 0;
-    padding: 0;
   }
 }

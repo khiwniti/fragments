@@ -529,11 +529,6 @@ function ChatPageInner() {
               messages={messages}
               isLoading={loading}
               setCurrentPreview={setCurrentPreview}
-              isResumeMode={false}
-              starterChips={undefined}
-              onChipClick={() => {}}
-              resumeView={undefined}
-              onOpenArtifact={() => setShowArtifactPanel(true)}
             />
             <ChatInput
               retry={() => submit({})}

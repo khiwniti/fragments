@@ -10,8 +10,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from '@/components/ui/tooltip'
-import { ResumeContentSchema } from '@/lib/schema'
-import { DeepPartial } from 'ai'
+import type { SandboxView } from '@/lib/resume-sandbox'
 import { ChevronsRight, LoaderCircle, Printer } from 'lucide-react'
 import { Dispatch, SetStateAction, useCallback } from 'react'
 
@@ -19,13 +18,13 @@ export function ResumePreview({
   selectedTab,
   onSelectedTabChange,
   isChatLoading,
-  content,
+  view,
   onClose,
 }: {
   selectedTab: 'preview' | 'data'
   onSelectedTabChange: Dispatch<SetStateAction<'preview' | 'data'>>
   isChatLoading: boolean
-  content?: DeepPartial<ResumeContentSchema>
+  view?: SandboxView
   onClose: () => void
 }) {
   const handlePrint = useCallback(() => {
@@ -33,7 +32,7 @@ export function ResumePreview({
   }, [])
 
   return (
-    <div className="absolute md:relative z-10 top-0 left-0 shadow-2xl md:rounded-tl-3xl md:rounded-bl-3xl md:border-l md:border-y bg-popover h-full w-full overflow-auto">
+    <div className="h-full w-full overflow-auto bg-card motion-reduce:animate-none">
       <Tabs
         value={selectedTab}
         onValueChange={(value) =>
@@ -50,11 +49,12 @@ export function ResumePreview({
                   size="icon"
                   className="text-muted-foreground"
                   onClick={onClose}
+                  aria-label="Close panel"
                 >
-                  <ChevronsRight className="h-5 w-5" />
+                  <ChevronsRight className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Close sidebar</TooltipContent>
+              <TooltipContent>Close panel</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           <div className="flex justify-center">
@@ -99,14 +99,14 @@ export function ResumePreview({
         </div>
         <div className="overflow-y-auto w-full h-full">
           <TabsContent value="preview" className="h-full mt-0">
-            <ResumeArtifact content={content} isLoading={isChatLoading} />
+            <ResumeArtifact view={view} isLoading={isChatLoading} />
           </TabsContent>
           <TabsContent value="data" className="h-full mt-0">
             <FragmentCode
               files={[
                 {
                   name: 'resume.json',
-                  content: JSON.stringify(content ?? {}, null, 2),
+                  content: JSON.stringify(view ?? { focus: '', sections: [] }, null, 2),
                 },
               ]}
             />

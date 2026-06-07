@@ -1,7 +1,6 @@
 'use client'
 
-import { ResumeContentSchema } from '@/lib/schema'
-import { DeepPartial } from 'ai'
+import type { SandboxView } from '@/lib/resume-sandbox'
 import { useMemo } from 'react'
 import { A4Pager, PagerBlock } from './resume/a4-pager'
 import {
@@ -13,10 +12,10 @@ import {
 } from './resume/a4-blocks'
 
 export function ResumeArtifact({
-  content,
+  view,
   isLoading,
 }: {
-  content?: DeepPartial<ResumeContentSchema>
+  view?: SandboxView
   isLoading?: boolean
 }) {
   const blocks: PagerBlock[] = useMemo(() => {
@@ -24,8 +23,8 @@ export function ResumeArtifact({
       { key: 'header', kind: 'header', element: <ResumeHeaderBlock /> },
     ]
 
-    const sections = (content?.sections ?? []).filter(
-      (section) => section?.items?.length,
+    const sections = (view?.sections ?? []).filter(
+      (section) => section?.items && section.items.length > 0,
     )
 
     if (sections.length === 0) {
@@ -39,22 +38,20 @@ export function ResumeArtifact({
 
     sections.forEach((section, si) => {
       out.push({
-        key: `${section!.type}-heading`,
+        key: `${section.id}-heading`,
         kind: 'heading',
-        element: <SectionHeadingBlock title={section?.title ?? ''} />,
+        element: <SectionHeadingBlock title={section.title} />,
       })
-      ;(section!.items ?? [])
-        .filter((item): item is NonNullable<typeof item> => !!item)
-        .forEach((item, ii) => {
-          out.push({
-            key: `${section!.type}-item-${ii}`,
-            kind: 'item',
-            element: <SectionItemBlock item={item} />,
-          })
+      section.items.forEach((item, ii) => {
+        out.push({
+          key: `${section.id}-item-${ii}`,
+          kind: 'item',
+          element: <SectionItemBlock item={item} />,
         })
+      })
     })
     return out
-  }, [content, isLoading])
+  }, [view, isLoading])
 
   return <A4Pager blocks={blocks} />
 }

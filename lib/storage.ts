@@ -14,6 +14,8 @@ export interface SavedSession {
 }
 
 // ── Keys ───────────────────────────────────────────────────────────────────
+// Key values are kept stable for backward-compat with existing user data.
+// The legacy `resume-` prefix is intentional and is not a current-only marker.
 
 const ANON_ID_KEY = 'resume-anon-id'
 const SESSIONS_INDEX_KEY = 'resume-sessions-index'

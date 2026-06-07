@@ -35,7 +35,10 @@ export function useAuth(
 
   useEffect(() => {
     if (!supabase) {
-      console.warn('Supabase is not initialized')
+      console.warn(
+        '[auth] Supabase is not initialized; using a demo session. ' +
+          'Configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable real auth.',
+      )
       return setSession({ user: { email: 'demo@khiw.dev' } } as Session)
     }
 

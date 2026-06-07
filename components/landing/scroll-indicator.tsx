@@ -6,12 +6,12 @@ export function ScrollIndicator() {
       <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-[3px]">
         Scroll
       </span>
-      <svg
-        className="h-5 w-5 text-muted-foreground/40 animate-bounce"
-        fill="none"
-        viewBox="0 0 24 24"
-        stroke="currentColor"
-      >
+        <svg
+          className="h-5 w-5 text-muted-foreground/40 motion-safe:animate-scroll-bob"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke="currentColor"
+        >
         <path
           strokeLinecap="round"
           strokeLinejoin="round"

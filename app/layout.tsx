@@ -3,9 +3,9 @@ import { PostHogProvider, ThemeProvider } from './providers'
 import { Toaster } from '@/components/ui/toaster'
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata } from 'next'
-import { Quicksand, JetBrains_Mono } from 'next/font/google'
+import { Geist, Geist_Mono } from 'next/font/google'
 
-const quicksand = Quicksand({
+const geist = Geist({
   subsets: ['latin'],
   weight: ['400', '500', '600', '700'],
   variable: '--font-sans',
@@ -13,7 +13,7 @@ const quicksand = Quicksand({
   preload: false,
 })
 
-const jetbrainsMono = JetBrains_Mono({
+const geistMono = Geist_Mono({
   subsets: ['latin'],
   weight: ['400', '500'],
   variable: '--font-mono',
@@ -42,7 +42,7 @@ export default function RootLayout({
   return (
     <html lang="en" suppressHydrationWarning>
       <PostHogProvider>
-        <body className={`${quicksand.variable} ${jetbrainsMono.variable} font-sans`}>
+        <body className={`${geist.variable} ${geistMono.variable} font-sans`}>
           <ThemeProvider
             attribute="class"
             defaultTheme="dark"

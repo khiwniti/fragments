@@ -34,3 +34,13 @@ yarn-error.log*
 # typescript
 *.tsbuildinfo
 next-env.d.ts
+
+# playwright
+/playwright-report/
+/test-results/
+
+# claude code local
+/.claude/
+
+# impeccable live helper state
+/.impeccable/live/

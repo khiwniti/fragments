@@ -1,14 +1,18 @@
 import { toResumePrompt } from '@/lib/resume-prompt'
+import type { ResumeSandbox } from '@/lib/resume-sandbox'
 
 export const maxDuration = 300
 
 export async function POST(req: Request) {
-  const { messages } = await req.json()
+  const { messages, sandbox } = (await req.json()) as {
+    messages: Array<{ role: string; content: string }>
+    sandbox?: ResumeSandbox | null
+  }
 
-  const lastUserMsg = [...messages].reverse().find((m: any) => m.role === 'user')
+  const lastUserMsg = [...messages].reverse().find((m) => m.role === 'user')
   const question = lastUserMsg?.content || ''
 
-  const systemPrompt = toResumePrompt(question)
+  const systemPrompt = toResumePrompt(question, undefined, sandbox ?? null)
 
   const apiKey = process.env.NVIDIA_API_KEY
   if (!apiKey) {
@@ -28,12 +32,12 @@ export async function POST(req: Request) {
           model: 'meta/llama-3.1-70b-instruct',
           messages: [
             { role: 'system', content: systemPrompt },
-            ...messages.map((m: any) => ({
+            ...messages.map((m) => ({
               role: m.role,
               content: m.content,
             })),
           ],
-          max_tokens: 2048,
+          max_tokens: 3072,
           temperature: 0.3,
           stream: true,
           response_format: { type: 'json_object' },
@@ -103,7 +107,7 @@ export async function POST(req: Request) {
         'Cache-Control': 'no-cache',
       },
     })
-  } catch (error: any) {
+  } catch (error) {
     // Log full error server-side; return generic message to client to avoid leaking internals
     console.error('Resume chat error:', error)
     return new Response('An unexpected error occurred. Please try again later.', {

@@ -84,16 +84,19 @@ export const resumeItemSchema = z.object({
   url: z.string().optional().describe('Optional link URL.'),
 })
 
+export const resumeSectionTypeSchema = z.enum([
+  'highlights',
+  'experience',
+  'projects',
+  'skills',
+  'education',
+  'certifications',
+  'summary',
+])
+export type ResumeSectionType = z.infer<typeof resumeSectionTypeSchema>
+
 export const resumeSectionSchema = z.object({
-  type: z.enum([
-    'highlights',
-    'experience',
-    'projects',
-    'skills',
-    'education',
-    'certifications',
-    'summary',
-  ]).describe('Section type key.'),
+  type: resumeSectionTypeSchema.describe('Section type key.'),
   title: z.string().describe('Human-readable section title.'),
   items: z.array(resumeItemSchema).describe('Ordered list of items in this section.'),
 })
@@ -115,3 +118,86 @@ export const resumeContentSchema = z.object({
 export type ResumeItemSchema = z.infer<typeof resumeItemSchema>
 export type ResumeSectionSchema = z.infer<typeof resumeSectionSchema>
 export type ResumeContentSchema = z.infer<typeof resumeContentSchema>
+
+// ── Resume Sandbox Patch Schema ───────────────────────────────────────────
+// The model emits a patch against the current sandbox, not a full resume.
+// The client merges the patch into the local sandbox and renders the result.
+
+export const resumeSectionIdSchema = z
+  .string()
+  .min(2)
+  .max(80)
+  .regex(/^[a-z0-9][a-z0-9-]*$/, {
+    message:
+      'Section id must be kebab-case, lowercase, and start with a letter or number (e.g. "summary", "experience-acme-2023", "skills-frontend").',
+  })
+  .describe(
+    'Stable kebab-case id for the section. Reuse the same id when updating an existing section. New ids should be descriptive and unique within the sandbox.',
+  )
+
+export const resumeSectionWithIdSchema = z.object({
+  id: resumeSectionIdSchema,
+  type: resumeSectionTypeSchema,
+  title: z.string(),
+  items: z.array(resumeItemSchema),
+})
+
+export const resumeSectionUpdateSchema = z.object({
+  id: resumeSectionIdSchema.describe('The id of an existing section to update.'),
+  type: resumeSectionTypeSchema.optional(),
+  title: z.string().optional(),
+  items: z.array(resumeItemSchema).optional().describe('Replaces the section items.'),
+})
+
+export const resumeSectionReorderSchema = z.object({
+  id: resumeSectionIdSchema,
+  position: z.number().int().min(0).describe('New order position. Lower comes first.'),
+})
+
+export const resumePatchOpSchema = z
+  .object({
+    add: z
+      .array(resumeSectionWithIdSchema)
+      .optional()
+      .describe(
+        'Sections to add. Each must have a unique id that does not exist in the current sandbox.',
+      ),
+    update: z
+      .array(resumeSectionUpdateSchema)
+      .optional()
+      .describe('Sections to update by id. Omitted fields are preserved.'),
+    remove: z
+      .array(resumeSectionIdSchema)
+      .optional()
+      .describe('Section ids to remove from the sandbox.'),
+    reorder: z
+      .array(resumeSectionReorderSchema)
+      .optional()
+      .describe('Section ids to move to a new position.'),
+  })
+  .describe(
+    'Patch operations to apply to the sandbox. An empty patch is valid and means: keep the sandbox as-is and just respond.',
+  )
+
+export const resumePatchSchema = z.object({
+  commentary: z
+    .string()
+    .describe('A warm, conversational response to the recruiter question.'),
+  intent: z
+    .string()
+    .describe(
+      'Short phrase (3-8 words) describing what the user asked for. Used to label the orchestration history.',
+    ),
+  focus: z
+    .string()
+    .describe(
+      'Short phrase (2-5 words) describing what the current resume view is tuned for. Drives the right-panel header.',
+    ),
+  patch: resumePatchOpSchema,
+})
+
+export type ResumeSectionWithIdSchema = z.infer<typeof resumeSectionWithIdSchema>
+export type ResumeSectionUpdateSchema = z.infer<typeof resumeSectionUpdateSchema>
+export type ResumeSectionReorderSchema = z.infer<typeof resumeSectionReorderSchema>
+export type ResumePatchOpSchema = z.infer<typeof resumePatchOpSchema>
+export type ResumePatchSchema = z.infer<typeof resumePatchSchema>

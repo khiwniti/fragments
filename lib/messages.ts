@@ -47,7 +47,15 @@ export async function toMessageImage(files: File[]) {
 
   return Promise.all(
     files.map(async (file) => {
-      const base64 = Buffer.from(await file.arrayBuffer()).toString('base64')
+      const buffer = new Uint8Array(await file.arrayBuffer())
+      let binary = ''
+      const chunkSize = 0x8000
+      for (let i = 0; i < buffer.length; i += chunkSize) {
+        binary += String.fromCharCode(
+          ...buffer.subarray(i, i + chunkSize),
+        )
+      }
+      const base64 = btoa(binary)
       return `data:${file.type};base64,${base64}`
     }),
   )

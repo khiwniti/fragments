@@ -46,7 +46,7 @@ export function Preview({
     getTemplateId(result?.template!) !== 'code-interpreter-v1'
 
   return (
-    <div className="absolute md:relative z-10 top-0 left-0 shadow-2xl md:rounded-tl-3xl md:rounded-bl-3xl md:border-l md:border-y bg-popover h-full w-full overflow-auto">
+    <div className="h-full w-full overflow-auto bg-card motion-reduce:animate-none">
       <Tabs
         value={selectedTab}
         onValueChange={(value) =>
@@ -63,11 +63,12 @@ export function Preview({
                   size="icon"
                   className="text-muted-foreground"
                   onClick={onClose}
+                  aria-label="Close panel"
                 >
-                  <ChevronsRight className="h-5 w-5" />
+                  <ChevronsRight className="h-5 w-5" aria-hidden="true" />
                 </Button>
               </TooltipTrigger>
-              <TooltipContent>Close sidebar</TooltipContent>
+              <TooltipContent>Close panel</TooltipContent>
             </Tooltip>
           </TooltipProvider>
           <div className="flex justify-center">

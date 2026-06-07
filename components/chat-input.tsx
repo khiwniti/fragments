@@ -10,8 +10,20 @@ import {
 } from '@/components/ui/tooltip'
 import { isFileInArray } from '@/lib/utils'
 import { ArrowUp, Paperclip, Square, X } from 'lucide-react'
-import { SetStateAction, useEffect, useMemo, useState } from 'react'
+import { SetStateAction, useEffect, useState } from 'react'
 import TextareaAutosize from 'react-textarea-autosize'
+
+const MAX_FILE_BYTES = 5 * 1024 * 1024
+const MAX_FILE_COUNT = 12
+
+function readAsDataUrl(file: File): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = () => resolve(reader.result as string)
+    reader.onerror = () => reject(reader.error)
+    reader.readAsDataURL(file)
+  })
+}
 
 export function ChatInput({
   retry,
@@ -44,12 +56,32 @@ export function ChatInput({
   children: React.ReactNode
   isResumeMode?: boolean
 }) {
-  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+  const [fileError, setFileError] = useState<string | null>(null)
+  const [previewUrls, setPreviewUrls] = useState<string[]>([])
+
+  function validateAndAppend(raw: File[]) {
+    const accepted: File[] = []
+    let firstError: string | null = null
+    for (const file of raw) {
+      if (file.size > MAX_FILE_BYTES) {
+        if (!firstError) firstError = `${file.name} is larger than 5MB.`
+        continue
+      }
+      accepted.push(file)
+    }
+    if (firstError) {
+      setFileError(firstError)
+    } else {
+      setFileError(null)
+    }
     handleFileChange((prev) => {
-      const newFiles = Array.from(e.target.files || [])
-      const uniqueFiles = newFiles.filter((file) => !isFileInArray(file, prev))
-      return [...prev, ...uniqueFiles]
+      const next = [...prev, ...accepted.filter((f) => !isFileInArray(f, prev))]
+      return next.slice(0, MAX_FILE_COUNT)
     })
+  }
+
+  function handleFileInput(e: React.ChangeEvent<HTMLInputElement>) {
+    validateAndAppend(Array.from(e.target.files || []))
   }
 
   function handleFileRemove(file: File) {
@@ -65,12 +97,7 @@ export function ChatInput({
 
         const file = item.getAsFile()
         if (file) {
-          handleFileChange((prev) => {
-            if (!isFileInArray(file, prev)) {
-              return [...prev, file]
-            }
-            return prev
-          })
+          validateAndAppend([file])
         }
       }
     }
@@ -96,46 +123,43 @@ export function ChatInput({
     const droppedFiles = Array.from(e.dataTransfer.files).filter((file) =>
       file.type.startsWith('image/'),
     )
-
-    if (droppedFiles.length > 0) {
-      handleFileChange((prev) => {
-        const uniqueFiles = droppedFiles.filter(
-          (file) => !isFileInArray(file, prev),
-        )
-        return [...prev, ...uniqueFiles]
-      })
-    }
+    validateAndAppend(droppedFiles)
   }
 
-  const filePreview = useMemo(() => {
-    if (files.length === 0) return null
-    return Array.from(files).map((file) => {
-      return (
-        <div className="relative" key={file.name}>
-          <span
-            onClick={() => handleFileRemove(file)}
-            className="absolute top-[-8] right-[-8] bg-muted rounded-full p-1"
-          >
-            <X className="h-3 w-3 cursor-pointer" />
-          </span>
-          <img
-            src={URL.createObjectURL(file)}
-            alt={file.name}
-            className="rounded-xl w-10 h-10 object-cover"
-          />
-        </div>
-      )
-    })
-  }, [files])
+  useEffect(() => {
+    if (!isMultiModal) {
+      handleFileChange([])
+      return
+    }
+    let cancelled = false
+    Promise.all(files.map(readAsDataUrl))
+      .then((urls) => {
+        if (!cancelled) setPreviewUrls(urls)
+      })
+      .catch(() => {
+        if (!cancelled) setPreviewUrls([])
+      })
+    return () => {
+      cancelled = true
+    }
+  }, [files, isMultiModal, handleFileChange])
 
   function onEnter(e: React.KeyboardEvent<HTMLFormElement>) {
-    if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
+    if (e.key !== 'Enter' || e.nativeEvent.isComposing) return
+    if (e.shiftKey) return
+    const isShortcut = e.metaKey || e.ctrlKey
+    if (!isShortcut && e.key === 'Enter') {
       e.preventDefault()
       if (e.currentTarget.checkValidity()) {
         handleSubmit(e)
       } else {
         e.currentTarget.reportValidity()
       }
+      return
+    }
+    if (isShortcut) {
+      e.preventDefault()
+      handleSubmit(e)
     }
   }
 
@@ -143,7 +167,11 @@ export function ChatInput({
     if (!isMultiModal) {
       handleFileChange([])
     }
-  }, [isMultiModal])
+  }, [isMultiModal, handleFileChange])
+
+  const showError = isErrored || fileError
+  const errorText = fileError || errorMessage
+  const errorIsRate = isRateLimited && !fileError
 
   return (
     <form
@@ -155,18 +183,20 @@ export function ChatInput({
       onDragOver={isMultiModal ? handleDrag : undefined}
       onDrop={isMultiModal ? handleDrop : undefined}
     >
-      {isErrored && (
+      {showError && (
         <div
-          className={`flex items-center p-1.5 text-sm font-medium mx-4 mb-10 rounded-xl ${
-            isRateLimited
+          role="alert"
+          className={`flex items-center p-1.5 text-sm font-medium mx-4 mb-2 rounded-xl ${
+            errorIsRate
               ? 'bg-orange-400/10 text-orange-400'
               : 'bg-red-400/10 text-red-400'
           }`}
         >
-          <span className="flex-1 px-1.5">{errorMessage}</span>
+          <span className="flex-1 px-1.5">{errorText}</span>
           <button
+            type="button"
             className={`px-2 py-1 rounded-sm ${
-              isRateLimited ? 'bg-orange-400/20' : 'bg-red-400/20'
+              errorIsRate ? 'bg-orange-400/20' : 'bg-red-400/20'
             }`}
             onClick={retry}
           >
@@ -187,10 +217,9 @@ export function ChatInput({
         >
           <div className="flex items-center px-3 py-2 gap-1">{children}</div>
           <TextareaAutosize
-            autoFocus={true}
             minRows={1}
-            maxRows={5}
-            className="text-normal px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none"
+            maxRows={12}
+            className="text-normal px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none max-h-[40vh]"
             required={true}
             placeholder={isResumeMode ? "Ask about experience, skills, or projects..." : "Describe your app..."}
             disabled={isErrored}
@@ -222,14 +251,39 @@ export function ChatInput({
                         e.preventDefault()
                         document.getElementById('multimodal')?.click()
                       }}
+                      aria-label="Add attachments"
                     >
-                      <Paperclip className="h-5 w-5" />
+                      <Paperclip className="h-5 w-5" aria-hidden="true" />
                     </Button>
                   </TooltipTrigger>
                   <TooltipContent>Add attachments</TooltipContent>
                 </Tooltip>
               </TooltipProvider>
-              {files.length > 0 && filePreview}
+              {files.length > 0 && (
+                <div className="flex flex-wrap gap-2">
+                  {files.map((file, i) => (
+                    <div className="relative" key={`${file.name}-${i}`}>
+                      <button
+                        type="button"
+                        onClick={() => handleFileRemove(file)}
+                        aria-label={`Remove ${file.name}`}
+                        className="absolute -top-2 -right-2 bg-secondary border border-border rounded-full p-1 hover:bg-accent transition-colors"
+                      >
+                        <X className="h-3 w-3" aria-hidden="true" />
+                      </button>
+                      {previewUrls[i] ? (
+                        <img
+                          src={previewUrls[i]}
+                          alt={file.name}
+                          className="rounded-xl w-10 h-10 object-cover border border-border"
+                        />
+                      ) : (
+                        <div className="rounded-xl w-10 h-10 bg-secondary border border-border" />
+                      )}
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
             <div>
               {!isLoading ? (
@@ -242,11 +296,12 @@ export function ChatInput({
                         size="icon"
                         type="submit"
                         className="rounded-xl h-10 w-10"
+                        aria-label="Send message"
                       >
-                        <ArrowUp className="h-5 w-5" />
+                        <ArrowUp className="h-5 w-5" aria-hidden="true" />
                       </Button>
                     </TooltipTrigger>
-                    <TooltipContent>Send message</TooltipContent>
+                    <TooltipContent>Send message (Enter)</TooltipContent>
                   </Tooltip>
                 </TooltipProvider>
               ) : (
@@ -261,8 +316,9 @@ export function ChatInput({
                           e.preventDefault()
                           stop()
                         }}
+                        aria-label="Stop generation"
                       >
-                        <Square className="h-5 w-5" />
+                        <Square className="h-5 w-5" aria-hidden="true" />
                       </Button>
                     </TooltipTrigger>
                     <TooltipContent>Stop generation</TooltipContent>
@@ -273,11 +329,13 @@ export function ChatInput({
           </div>
         </div>
       </div>
-      <p className="text-xs text-muted-foreground mt-2 text-center">
+      <p className="text-[10px] text-muted-foreground mt-2 text-center font-mono tracking-wider uppercase">
         Built by{' '}
         <a href="https://khiw.dev" target="_blank" className="text-primary">
           khiw.dev
         </a>
+        <span className="mx-1.5" aria-hidden="true">·</span>
+        <span className="text-muted-foreground/70">Enter to send · Shift+Enter for newline</span>
       </p>
     </form>
   )

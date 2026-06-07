@@ -19,8 +19,8 @@ const config = {
     },
     extend: {
       fontFamily: {
-        sans: ['var(--font-sans)', 'Quicksand', 'system-ui', 'sans-serif'],
-        mono: ['var(--font-mono)', 'JetBrains Mono', 'Geist Mono', 'monospace'],
+        sans: ['var(--font-sans)', 'Geist', 'system-ui', 'sans-serif'],
+        mono: ['var(--font-mono)', 'Geist Mono', 'monospace'],
       },
       colors: {
         border: 'hsl(var(--border))',
@@ -115,6 +115,10 @@ const config = {
           '0%, 100%': { opacity: '1' },
           '50%': { opacity: '0.3' },
         },
+        'scroll-bob': {
+          '0%, 100%': { transform: 'translateY(0)', opacity: '0.4' },
+          '50%': { transform: 'translateY(4px)', opacity: '0.7' },
+        },
       },
       animation: {
         'accordion-down': 'accordion-down 0.2s ease-out',
@@ -125,6 +129,7 @@ const config = {
         'slide-in-right': 'slide-in-right 0.55s cubic-bezier(0.22,1,0.36,1) both',
         shimmer: 'shimmer 1.4s infinite linear',
         'pulse-glow': 'pulse-glow 2s infinite',
+        'scroll-bob': 'scroll-bob 1.6s cubic-bezier(0.22,1,0.36,1) infinite',
       },
       backgroundImage: {
         shimmer:

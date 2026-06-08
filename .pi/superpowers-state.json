@@ -30,14 +30,11 @@
     "phase": "idle",
     "testFiles": [],
     "sourceFiles": [
-      "lib/blog/client.ts",
-      "app/api/copilotkit/[[...slug]]/route.ts",
-      "lib/auth.ts",
-      "lib/resume-agent.ts",
-      "components/resume-canvas.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/components/resume/a4-blocks.tsx",
+      "components/resume/tech-radar.tsx",
       "/Users/admin/tmp-khiw.dev/fragments/components/resume-canvas.tsx",
-      "components/resume/a4-blocks.tsx"
+      "/Users/admin/tmp-khiw.dev/fragments/app/api/copilotkit/[[...slug]]/route.ts",
+      "/Users/admin/tmp-khiw.dev/fragments/components/resume/a4-blocks.tsx",
+      "/Users/admin/tmp-khiw.dev/fragments/lib/resume-agent.ts"
     ],
     "redVerificationPending": false
   },

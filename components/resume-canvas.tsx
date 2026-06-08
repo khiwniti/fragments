@@ -17,6 +17,7 @@ import {
   EvidencePopover,
   type EvidenceState,
 } from './resume/a4-blocks'
+import { TechRadar, deriveRadarAxes } from './resume/tech-radar'
 
 /**
  * Interactive shared-state resume canvas.
@@ -411,6 +412,57 @@ export function ResumeCanvas() {
         })
       })
     })
+
+    // ── Tech Radar block ────────────────────────────────────────────────
+    // Add a skill radar chart after the skills section
+    const skillsSection = sections.find((s) => s.type === 'skills')
+    if (skillsSection?.items && skillsSection.items.length > 0) {
+      const { axes, benchmark } = deriveRadarAxes(skillsSection.items)
+      out.push({
+        key: 'tech-radar',
+        kind: 'heading',
+        element: (
+          <div className="pt-4 print:pt-4">
+            <SectionHeadingBlock
+              title="Skill Radar"
+              id="tech-radar"
+              onSelect={ask}
+              onAskSection={(id) => {
+                if (agent.isRunning) return
+                agent.addMessage({
+                  id: crypto.randomUUID(),
+                  role: 'user',
+                  content:
+                    'Analyze my skill distribution across the radar axes and suggest areas for improvement.',
+                })
+                copilotkit.runAgent({ agent })
+              }}
+              highlighted={highlights.has('tech-radar')}
+              activeTech={activeTech}
+              onTechFocus={handleTechFocus}
+            />
+            <div className="flex justify-center py-4 print:py-3">
+              <TechRadar
+                axes={axes}
+                comparison={{
+                  label: 'Avg. Senior',
+                  values: benchmark,
+                }}
+                onSelectAxis={(axis) =>
+                  ask(`radar-${axis.label}`, `${axis.label} skills`)
+                }
+                onHoverAxis={(axis) =>
+                  handleTechFocus(axis?.label ?? null)
+                }
+                activeTech={activeTech}
+                onTechFocus={handleTechFocus}
+              />
+            </div>
+          </div>
+        ),
+      })
+    }
+
     return out
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [

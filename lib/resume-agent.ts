@@ -77,9 +77,7 @@ function resolveResumeModel() {
     apiKey: process.env.NVIDIA_API_KEY,
     baseURL: NVIDIA_BASE_URL,
   })
-  return nvidia.chat(spec ?? DEFAULT_NVIDIA_MODEL, {
-    allowSystemInMessages: true,
-  })
+  return nvidia.chat(spec ?? DEFAULT_NVIDIA_MODEL)
 }
 
 export function createResumeAgent() {

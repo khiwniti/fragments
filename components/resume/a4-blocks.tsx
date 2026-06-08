@@ -354,7 +354,7 @@ export function SectionItemBlock({
   // Check if any of this item's tags match the active tech
   const hasActiveTech =
     activeTech &&
-    item.tags?.some((t) => t.toLowerCase().includes(activeTech.toLowerCase()))
+    item.tags?.some((t) => t?.toLowerCase().includes(activeTech.toLowerCase()))
 
   const containerClass = isHighlighted
     ? HIGHLIGHT_CLASSES
@@ -368,7 +368,7 @@ export function SectionItemBlock({
         <span className="font-medium text-[12px] text-slate-900">
           {item.label}
         </span>
-        {item.tags?.map((tag) => (
+        {item.tags?.filter((t): t is string => !!t).map((tag) => (
           <TechBadge
             key={tag}
             tag={tag}
@@ -390,7 +390,9 @@ export function SectionItemBlock({
     </>
   )
 
-  const children = (item.children ?? []).filter(Boolean)
+  const children = (item.children ?? []).filter(
+    (c): c is DeepPartial<ResumeItemSchema> => !!c,
+  )
 
   return (
     <div className={containerClass}>
@@ -412,7 +414,7 @@ export function SectionItemBlock({
               type="button"
               onClick={(e) => {
                 e.stopPropagation()
-                onEvidence(item.value ?? item.label ?? '', item.detail)
+                onEvidence(item.value ?? item.label ?? '', item.detail ?? '')
               }}
               className="inline-flex items-center gap-0.5 text-[10px] text-amber-600 hover:text-amber-800 hover:underline underline-offset-2 transition-colors print:hidden"
               title="View provenance"

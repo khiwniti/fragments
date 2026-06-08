@@ -30,7 +30,8 @@ const wrappedHandler = async (req: Request, ...args: unknown[]) => {
       headers: { 'Content-Type': 'application/json' },
     })
   }
-  return copilotHandler(req, ...args)
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  return (copilotHandler as any)(req, ...args)
 }
 
 export const GET = wrappedHandler

@@ -30,7 +30,8 @@
     "phase": "idle",
     "testFiles": [],
     "sourceFiles": [
-      "components/resume/skill-stat-card.tsx",
+      "components/resume/credential-timeline.tsx",
+      "components/resume/claim-density.tsx",
       "/Users/admin/tmp-khiw.dev/fragments/components/resume-canvas.tsx"
     ],
     "redVerificationPending": false

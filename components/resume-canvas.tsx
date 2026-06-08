@@ -26,6 +26,8 @@ import {
 import { ContributionHeatmap } from './resume/contribution-heatmap'
 import { LanguageChart } from './resume/language-chart'
 import { SkillStatCard, skillStatsFor } from './resume/skill-stat-card'
+import { CredentialTimeline, defaultCredentials } from './resume/credential-timeline'
+import { ClaimDensityVisualizer, deriveClaimStats } from './resume/claim-density'
 
 /**
  * Interactive shared-state resume canvas.
@@ -462,6 +464,56 @@ export function ResumeCanvas() {
               ),
             })
           }
+        }
+
+        // ── Claim Density after Summary ───────────────────────────
+        if (section.type === 'summary') {
+          const stats = deriveClaimStats(sections)
+          if (stats.length > 0) {
+            out.push({
+              key: 'claim-density',
+              kind: 'heading',
+              element: (
+                <div className="pt-2 pb-1 print:pt-2 print:pb-1">
+                  <ClaimDensityVisualizer
+                    sections={stats}
+                    onSelectSection={(sectionId) => {
+                      ask(
+                        sectionId,
+                        `Show evidence for ${sectionId}`,
+                      )
+                    }}
+                  />
+                </div>
+              ),
+            })
+          }
+        }
+
+        // ── Credential Timeline after Education ───────────────────
+        if (section.type === 'education') {
+          out.push({
+            key: 'credential-timeline',
+            kind: 'heading',
+            element: (
+              <div className="pt-2 print:pt-2">
+                <SectionHeadingBlock
+                  title="Timeline"
+                  id="credential-timeline"
+                  onSelect={ask}
+                  highlighted={highlights.has('credential-timeline')}
+                  activeTech={activeTech}
+                  onTechFocus={handleTechFocus}
+                />
+                <div className="py-2 print:py-2">
+                  <CredentialTimeline
+                    credentials={defaultCredentials()}
+                    onSelect={ask}
+                  />
+                </div>
+              </div>
+            ),
+          })
         }
       })
     })

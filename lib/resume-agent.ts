@@ -43,14 +43,19 @@ The shared application state MUST always have this exact shape (ResumeAgentState
 
 Rules:
 1. ALWAYS write the resume by calling AGUISendStateSnapshot with the COMPLETE state object ({ resume, highlights }). Never describe changes without calling it, and never send a fragment — always the full resume.
-2. Call query_knowledge_graph BEFORE writing facts (experience, projects, skills, education) — never invent facts about the candidate.
+2. Call query_knowledge_graph ONCE with a single comprehensive question covering everything you need (experience, projects, skills, education, certifications) — never invent facts about the candidate, and never split it into multiple queries.
 3. On first run, generate a complete resume: summary, highlights, experience, projects, skills, education, certifications.
 4. When the user asks about a specific item ("Tell me more about X"), answer briefly in chat AND send an updated snapshot adding a children[] hierarchy under that item with concrete sub-details, and set highlights to that item's id.
 5. Give every section and item a stable kebab-case id. Preserve existing ids when updating.
 6. Keep chat replies brief; the resume is the primary surface.`
 
 const NVIDIA_BASE_URL = 'https://integrate.api.nvidia.com/v1'
-const DEFAULT_NVIDIA_MODEL = 'meta/llama-3.1-70b-instruct'
+// NOTE: llama-3.1-70b stringifies nested tool-call args (sends snapshot as a
+// Python-repr string instead of a JSON object), which breaks the shared-state
+// snapshot. qwen3-next emits proper structured objects but generates tool calls
+// in a format AI SDK v6 rejects ("Expected 'function.name' to be a string").
+// llama-4-maverick has the best tool-calling compatibility with AI SDK v6.
+const DEFAULT_NVIDIA_MODEL = 'meta/llama-4-maverick-17b-128e-instruct'
 
 /**
  * Resolve the model for the resume agent.
@@ -72,7 +77,9 @@ function resolveResumeModel() {
     apiKey: process.env.NVIDIA_API_KEY,
     baseURL: NVIDIA_BASE_URL,
   })
-  return nvidia.chat(spec ?? DEFAULT_NVIDIA_MODEL)
+  return nvidia.chat(spec ?? DEFAULT_NVIDIA_MODEL, {
+    allowSystemInMessages: true,
+  })
 }
 
 export function createResumeAgent() {

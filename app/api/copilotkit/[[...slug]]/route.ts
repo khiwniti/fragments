@@ -12,9 +12,6 @@ const runtime = new CopilotRuntime({
   runner: new InMemoryAgentRunner(),
 })
 
-// Use single-route mode to handle both:
-// - POST /api/copilotkit with {method: "info"} (SDK fallback)
-// - POST /api/copilotkit with {method: "run", ...} (agent execution)
 const app = createCopilotEndpoint({
   runtime,
   basePath: '/api/copilotkit',
@@ -22,7 +19,21 @@ const app = createCopilotEndpoint({
   cors: { origin: '*' },
 })
 
-export const GET = handle(app)
+const copilotHandler = handle(app)
+
+// Intercept GET /threads at the top level — the single-route copilot handler rejects non-POST
+const wrappedHandler = async (req: Request, ...args: unknown[]) => {
+  if (req.method === 'GET' && new URL(req.url).pathname.includes('/threads')) {
+    // Return empty thread list — threads aren't persisted in memory mode
+    return new Response(JSON.stringify({ threads: [] }), {
+      status: 200,
+      headers: { 'Content-Type': 'application/json' },
+    })
+  }
+  return copilotHandler(req, ...args)
+}
+
+export const GET = wrappedHandler
 export const POST = handle(app)
 export const PATCH = handle(app)
 export const DELETE = handle(app)

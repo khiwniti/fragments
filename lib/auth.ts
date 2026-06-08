@@ -14,14 +14,20 @@ type UserTeam = {
 export async function getUserTeam(
   session: Session,
 ): Promise<UserTeam | undefined> {
-  const { data: defaultTeam } = await supabase!
-    .from('users_teams')
-    .select('teams (id, name, tier, email)')
-    .eq('user_id', session?.user.id)
-    .eq('is_default', true)
-    .single()
+  // Anonymous users don't have teams — skip the query to avoid 404
+  if ((session.user as any).is_anonymous) return undefined
+  try {
+    const { data: defaultTeam } = await supabase!
+      .from('users_teams')
+      .select('teams (id, name, tier, email)')
+      .eq('user_id', session?.user.id)
+      .eq('is_default', true)
+      .maybeSingle()
 
-  return defaultTeam?.teams as unknown as UserTeam
+    return defaultTeam?.teams as unknown as UserTeam
+  } catch {
+    return undefined
+  }
 }
 
 export function useAuth(

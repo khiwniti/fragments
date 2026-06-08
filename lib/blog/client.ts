@@ -39,7 +39,7 @@ export async function getPublishedPosts(
 
   const { data, error, count } = await query
 
-  if (error) throw error
+  if (error) return { posts: [], total: 0, page, perPage: PAGE_SIZE, totalPages: 0 }
 
   return {
     posts: (data as BlogPost[]) || [],

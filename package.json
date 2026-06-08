@@ -6,7 +6,9 @@
     "dev": "next dev --turbo",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "deps:check": "node scripts/check-dependencies.mjs",
+    "deps:report": "node scripts/check-dependencies.mjs --report"
   },
   "dependencies": {
     "@ag-ui/client": "^0.0.53",

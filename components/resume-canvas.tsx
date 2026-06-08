@@ -24,6 +24,7 @@ import {
   GRAPH_RAG_ARCH,
 } from './resume/architecture-explorer'
 import { ContributionHeatmap } from './resume/contribution-heatmap'
+import { LanguageChart } from './resume/language-chart'
 
 /**
  * Interactive shared-state resume canvas.
@@ -490,6 +491,36 @@ export function ResumeCanvas() {
               <div className="flex flex-col items-center justify-center">
                 <ContributionHeatmap />
               </div>
+            </div>
+          </div>
+        ),
+      })
+
+      // ── Language Chart ────────────────────────────────────────────────
+      out.push({
+        key: 'language-chart',
+        kind: 'heading',
+        element: (
+          <div className="pt-2 print:pt-2">
+            <SectionHeadingBlock
+              title="Language Distribution"
+              id="language-chart"
+              onSelect={ask}
+              highlighted={highlights.has('language-chart')}
+              activeTech={activeTech}
+              onTechFocus={handleTechFocus}
+            />
+            <div className="flex justify-center py-3 print:py-2">
+              <LanguageChart
+                onHoverLanguage={(label) =>
+                  handleTechFocus(label ?? null)
+                }
+                onClickLanguage={(label) => {
+                  setActiveFilter(label)
+                }}
+                activeTech={activeTech}
+                onTechFocus={handleTechFocus}
+              />
             </div>
           </div>
         ),

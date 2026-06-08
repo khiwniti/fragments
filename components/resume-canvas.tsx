@@ -23,6 +23,7 @@ import {
   AI_RESUME_ARCH,
   GRAPH_RAG_ARCH,
 } from './resume/architecture-explorer'
+import { ContributionHeatmap } from './resume/contribution-heatmap'
 
 /**
  * Interactive shared-state resume canvas.
@@ -470,7 +471,7 @@ export function ResumeCanvas() {
               activeTech={activeTech}
               onTechFocus={handleTechFocus}
             />
-            <div className="flex justify-center py-4 print:py-3">
+            <div className="flex flex-col gap-4 md:flex-row md:items-start justify-center py-4 print:py-3">
               <TechRadar
                 axes={axes}
                 comparison={{
@@ -486,6 +487,9 @@ export function ResumeCanvas() {
                 activeTech={activeTech}
                 onTechFocus={handleTechFocus}
               />
+              <div className="flex flex-col items-center justify-center">
+                <ContributionHeatmap />
+              </div>
             </div>
           </div>
         ),

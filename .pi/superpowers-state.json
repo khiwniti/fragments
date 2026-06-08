@@ -30,7 +30,7 @@
     "phase": "idle",
     "testFiles": [],
     "sourceFiles": [
-      "components/resume/architecture-explorer.tsx",
+      "components/resume/contribution-heatmap.tsx",
       "/Users/admin/tmp-khiw.dev/fragments/components/resume-canvas.tsx"
     ],
     "redVerificationPending": false

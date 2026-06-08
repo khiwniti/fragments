@@ -12,9 +12,14 @@ const runtime = new CopilotRuntime({
   runner: new InMemoryAgentRunner(),
 })
 
+// Use single-route mode to handle both:
+// - POST /api/copilotkit with {method: "info"} (SDK fallback)
+// - POST /api/copilotkit with {method: "run", ...} (agent execution)
 const app = createCopilotEndpoint({
   runtime,
   basePath: '/api/copilotkit',
+  mode: 'single-route',
+  cors: { origin: '*' },
 })
 
 export const GET = handle(app)

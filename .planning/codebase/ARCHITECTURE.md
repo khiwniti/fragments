@@ -1,7 +1,8 @@
 <!-- refreshed: 2026-06-07 -->
 # Architecture
 
-**Analysis Date:** 2026-06-07
+**Analysis Date:** 2026-06-08
+**Previous:** 2026-06-07
 
 ## System Overview
 
@@ -21,6 +22,10 @@
 │                     Component Layer                          │
 │   `components/`  +  `components/landing/`                   │
 │   Chat UI · Preview · Resume · Auth · Blog · Admin          │
+├─────────────────────────────────────────────────────────────┤
+│              CopilotKit Shared State Layer                   │
+│   `components/resume/`  +  `@copilotkit/react-core`         │
+│   Resume Canvas · Artifact Rendering · State Sync           │
 └────────────────────────────┬────────────────────────────────┘
                              │
                              ▼
@@ -28,14 +33,14 @@
 │                       Library Layer                          │
 │                     `lib/`                                  │
 │  auth.ts · storage.ts · messages.ts · schema.ts · models    │
-│  resume-agent-client.ts · knowledge.ts · utils.ts           │
+│  resume-agent.ts · resume-agent-client.ts · knowledge.ts    │
 └────────────────────────────┬────────────────────────────────┘
                              │
                              ▼
 ┌─────────────────────────────────────────────────────────────┐
 │                   External Services                          │
-│  Supabase (Auth + Database) · Vercel AI SDK · Resume Agent  │
-│  Graph-RAG Backend                                          │
+│  Supabase (Auth) · Vercel AI SDK · CopilotKit Runtime (v2)  │
+│  Resume Agent (NVIDIA NIM) · Graph-RAG Backend              │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -62,9 +67,11 @@
 **Key Characteristics:**
 - App Router with `'use client'` directive for interactive components
 - Vercel AI SDK `streamObject` for LLM-structured output
+- **CopilotKit `@copilotkit/runtime` v2** for shared agent state with `BuiltInAgent`
+- **Resume agent uses NVIDIA NIM** via `createOpenAI` from `@ai-sdk/openai`
 - Supabase Auth for authentication
 - localStorage for session persistence (anonymous-first, auth-enhanced)
-- Dual endpoint routing: `/api/chat` (fragments) vs `/api/resume-chat` (resume content)
+- **Dual endpoint routing:** `/api/chat` (fragments) vs `/api/copilotkit` (resume via CopilotKit)
 - Static knowledge fallback when resume-agent backend is unavailable
 
 ## Layers
@@ -113,13 +120,18 @@
 
 ### Resume Chat Path (RESUME_MODE)
 
-1. **User submits** to `/api/resume-chat` endpoint
-2. **API route** (`app/api/resume-chat/route.ts`) builds knowledge context
-3. **`resume-agent-client.ts`** fetches from graph-rag backend OR static fallback
-4. **LLM streams structured `ResumeContentSchema`** via AI SDK
-5. **Client `useObject` hook** receives parsed resume content
-6. **`setResumeContent` state** triggers artifact panel display
-7. **Session persisted** to localStorage via `persistSession`
+1. **User submits** to `/api/copilotkit` endpoint (CopilotKit runtime)
+2. **CopilotRuntime** routes to `resume` BuiltInAgent (`lib/resume-agent.ts`)
+3. **Agent's `query_knowledge_graph` tool** fetches from graph-rag backend OR static fallback
+4. **BuiltInAgent streams** `AGUISendStateSnapshot` events via shared state
+5. **Frontend `useCopilotChat`** receives state updates and renders `ResumeAgentState`
+6. **Session persisted** to localStorage via `persistSession`
+
+**Key files:**
+- `lib/resume-agent.ts` - BuiltInAgent definition with NVIDIA NIM model
+- `app/api/copilotkit/[[...slug]]/route.ts` - CopilotKit endpoint
+- `lib/resume-agent-client.ts` - `getEnrichedContext()` for graph queries
+- `components/resume/resume-canvas.tsx` - Live resume rendering
 
 ### Session Persistence Flow
 

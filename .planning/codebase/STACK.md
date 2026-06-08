@@ -1,6 +1,7 @@
 # Technology Stack
 
-**Analysis Date:** 2026-06-07
+**Analysis Date:** 2026-06-08
+**Previous:** 2026-06-07
 
 ## Languages
 
@@ -47,9 +48,12 @@
 - `@ai-sdk/openai` 3.0.67, `@ai-sdk/anthropic` 3.0.81, `@ai-sdk/google` 3.0.80, `@ai-sdk/google-vertex` 4.0.141, `@ai-sdk/mistral` 3.0.37, `@ai-sdk/fireworks` 2.0.53 - Multi-provider LLM integrations
 - `ollama-ai-provider` 1.2.0 - Local Ollama models
 - `openai` 6.42.0 - OpenAI client
+- **NVIDIA: `createOpenAI` from `@ai-sdk/openai`** - For NVIDIA NIM inference (used in resume agent)
 - `marked` 18.0.4 - Markdown parsing
 - `neo4j-driver` 6.0.1 - Neo4j graph database
 - `@e2b/code-interpreter` 1.0.2, `e2b` 2.8.4 - Code execution sandbox
+- **`@copilotkit/runtime` 1.59.5** - CopilotKit runtime for shared agent state (v2 API with BuiltInAgent)
+- **`@copilotkit/react-core` 1.59.5** - CopilotKit React hooks
 
 **Rich Text Editing:**
 - `@tiptap/react` 3.25.0, `@tiptap/starter-kit` 3.25.0 - Rich text editor
@@ -73,10 +77,13 @@
 - `class-variance-authority` 0.7.0 - Variant handling
 - `clsx` 2.1.1, `tailwind-merge` 2.5.2 - Class merging
 - `tailwindcss-animate` 1.0.7 - Animation utilities
+- **`tailwindcss` 4.3.0** - Upgraded from v3 for CopilotKit CSS compatibility
+- **`@tailwindcss/postcss` 4.3.0** - Required for Tailwind v4
 - `react-textarea-autosize` 8.5.3 - Auto-resize textarea
 
 **Validation & Types:**
 - `zod` 3.23.8 - Schema validation
+- `hono` 4.12.23 - Hono backend (used for CopilotKit endpoint)
 - `isomorphic-dompurify` 3.15.0 - XSS sanitization
 - `nanoid` 5.1.6 - ID generation
 

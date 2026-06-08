@@ -1,6 +1,7 @@
 # Codebase Structure
 
-**Analysis Date:** 2026-06-07
+**Analysis Date:** 2026-06-08
+**Previous:** 2026-06-07
 
 ## Directory Layout
 
@@ -80,7 +81,7 @@ fragments/
 
 **API Routes:**
 - `/api/chat/route.ts` — Fragment generation endpoint
-- `/api/resume-chat/route.ts` — Resume chat endpoint
+- **`/api/copilotkit/[[...slug]]/route.ts`** — CopilotKit runtime endpoint for resume agent
 - `/api/sandbox/route.ts` — Sandbox execution
 - `/api/ai/edit/route.ts`, `/api/ai/image/route.ts` — AI sub-endpoints
 - `/api/profile/route.ts` — Profile data
@@ -92,9 +93,9 @@ fragments/
 - `lib/schema.ts` — Zod validation schemas
 - `lib/messages.ts` — Message type definitions
 - `lib/models.ts` — LLM model configuration
-- `lib/resume-agent-client.ts` — Graph-RAG backend client
+- **`lib/resume-agent.ts`** — CopilotKit BuiltInAgent definition (NVIDIA NIM)
+- `lib/resume-agent-client.ts` — Graph-RAG backend client (`getEnrichedContext`)
 - `lib/knowledge.ts` — Static knowledge context builder
-- `lib/supabase.ts` — Supabase client singleton
 
 **Configuration:**
 - `app/layout.tsx` — Root layout with providers

@@ -18,6 +18,11 @@ import {
   type EvidenceState,
 } from './resume/a4-blocks'
 import { TechRadar, deriveRadarAxes } from './resume/tech-radar'
+import {
+  ArchitectureExplorer,
+  AI_RESUME_ARCH,
+  GRAPH_RAG_ARCH,
+} from './resume/architecture-explorer'
 
 /**
  * Interactive shared-state resume canvas.
@@ -410,6 +415,30 @@ export function ResumeCanvas() {
             />
           ),
         })
+
+        // ── Architecture Explorer for project items ────────────────
+        if (section.type === 'projects' && item?.id) {
+          const archs: Record<string, typeof AI_RESUME_ARCH> = {
+            'proj-resume-agent': AI_RESUME_ARCH,
+            'proj-graph-rag': GRAPH_RAG_ARCH,
+          }
+          const arch = archs[item.id]
+          if (arch) {
+            out.push({
+              key: `${section.id}-arch-${item.id}`,
+              kind: 'heading',
+              element: (
+                <ArchitectureExplorer
+                  architecture={arch}
+                  onSelectNode={(id, label) => ask(`arch-${id}`, label)}
+                  onTechFocus={handleTechFocus}
+                  activeTech={activeTech}
+                  onEvidence={handleEvidenceWithCoords}
+                />
+              ),
+            })
+          }
+        }
       })
     })
 

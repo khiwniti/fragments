@@ -30,7 +30,7 @@
     "phase": "idle",
     "testFiles": [],
     "sourceFiles": [
-      "components/resume/language-chart.tsx",
+      "components/resume/skill-stat-card.tsx",
       "/Users/admin/tmp-khiw.dev/fragments/components/resume-canvas.tsx"
     ],
     "redVerificationPending": false

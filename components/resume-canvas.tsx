@@ -25,6 +25,7 @@ import {
 } from './resume/architecture-explorer'
 import { ContributionHeatmap } from './resume/contribution-heatmap'
 import { LanguageChart } from './resume/language-chart'
+import { SkillStatCard, skillStatsFor } from './resume/skill-stat-card'
 
 /**
  * Interactive shared-state resume canvas.
@@ -417,6 +418,27 @@ export function ResumeCanvas() {
             />
           ),
         })
+
+        // ── Skill Stat Card for skills items ──────────────────────
+        if (section.type === 'skills' && item?.id && item.label) {
+          const stat = skillStatsFor(item.label)
+          if (stat) {
+            out.push({
+              key: `${section.id}-stat-${item.id}`,
+              kind: 'heading',
+              element: (
+                <SkillStatCard
+                  stat={stat}
+                  onNavigateProject={(projectId) => {
+                    // Find and ask about the related project
+                    ask(projectId, projectId.replace('proj-', '').replace(/-/g, ' '))
+                  }}
+                  onEvidence={handleEvidenceWithCoords}
+                />
+              ),
+            })
+          }
+        }
 
         // ── Architecture Explorer for project items ────────────────
         if (section.type === 'projects' && item?.id) {

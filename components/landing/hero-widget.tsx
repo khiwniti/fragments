@@ -14,8 +14,8 @@ export function HeroWidget() {
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center px-6">
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full pointer-events-none"
-        style={{ background: 'rgba(52,211,153,0.02)', filter: 'blur(120px)' }}
+        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full pointer-events-none bg-accent-surface"
+        style={{ filter: 'blur(120px)' }}
       />
 
       <Reveal>
@@ -50,7 +50,7 @@ export function HeroWidget() {
           <span>📍 Bangkok, Thailand 🇹🇭</span>
           <span className="text-border">·</span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-card border border-border">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             Available
           </span>
         </div>

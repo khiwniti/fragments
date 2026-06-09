@@ -7,11 +7,11 @@ function highlightTech(tech: string) {
   document.querySelectorAll('[data-tech]').forEach((el) => {
     const t = el.getAttribute('data-tech')?.toLowerCase().replace(/[^a-z0-9]/g, '');
     if (t === normalized) {
-      (el as HTMLElement).style.borderColor = 'rgba(52, 211, 153, 0.5)';
-      (el as HTMLElement).style.background = 'rgba(52, 211, 153, 0.08)';
+      (el as HTMLElement).style.borderColor = 'hsl(var(--primary) / 0.5)';
+      (el as HTMLElement).style.background = 'hsl(var(--primary) / 0.08)';
     }
   });
-}
+} 
 
 function clearHighlight() {
   document.querySelectorAll('[data-tech]').forEach((el) => {

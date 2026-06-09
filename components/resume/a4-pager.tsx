@@ -1,5 +1,7 @@
 'use client'
 
+/* A4 PRINT PALETTE — fixed by design */
+
 import {
   ReactNode,
   useLayoutEffect,

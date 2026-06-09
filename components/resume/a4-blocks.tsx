@@ -1,5 +1,7 @@
 'use client'
 
+/* A4 PRINT PALETTE — fixed by design */
+
 import { ResumeItemSchema } from '@/lib/schema'
 import { DeepPartial } from 'ai'
 import { profile } from '@/lib/profile'
@@ -74,21 +76,21 @@ export function EvidencePopover({
   return (
     <div
       ref={ref}
-      className="fixed z-50 w-72 rounded-lg border border-slate-200 bg-white shadow-xl"
+      className="fixed z-50 w-72 rounded-lg border border-border bg-card shadow-lg"
       style={{ left: Math.min(evidence.x, window.innerWidth - 300), top: Math.min(evidence.y, window.innerHeight - 200) }}
     >
-      <div className="flex items-center justify-between border-b border-slate-100 px-3 py-2">
-        <span className="text-xs font-semibold text-slate-700">Provenance</span>
-        <button onClick={onClose} className="text-slate-400 hover:text-slate-600">
+      <div className="flex items-center justify-between border-b border-border/60 px-3 py-2">
+        <span className="text-xs font-semibold text-foreground">Provenance</span>
+        <button onClick={onClose} className="text-muted-foreground hover:text-foreground">
           <X className="h-3 w-3" />
         </button>
       </div>
       <div className="px-3 py-2">
-        <p className="text-xs font-medium text-slate-800">{evidence.claim}</p>
-        <p className="text-[11px] text-slate-500 mt-1 leading-relaxed">
+        <p className="text-xs font-medium text-foreground">{evidence.claim}</p>
+        <p className="text-[11px] text-muted-foreground mt-1 leading-relaxed">
           {evidence.detail}
         </p>
-        <div className="mt-2 flex items-center gap-1.5 text-[10px] text-slate-400">
+        <div className="mt-2 flex items-center gap-1.5 text-[10px] text-muted-foreground/70">
           <FileText className="h-3 w-3" />
           <span>Sourced from portfolio knowledge graph</span>
         </div>

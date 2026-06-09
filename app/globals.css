@@ -192,6 +192,25 @@ a {
     display: none !important;
   }
 
+    /* Heatmap cell CSS tooltip */
+  .heatmap-cell { position: relative; }
+  .heatmap-cell:hover::after {
+    content: attr(data-tip);
+    position: absolute;
+    bottom: 125%;
+    left: 50%;
+    transform: translateX(-50%);
+    white-space: nowrap;
+    padding: 4px 8px;
+    border-radius: 6px;
+    font-size: 11px;
+    background: hsl(var(--popover));
+    color: hsl(var(--popover-foreground));
+    border: 1px solid hsl(var(--border));
+    pointer-events: none;
+    z-index: 10;
+  }
+
   @page {
     size: A4 portrait;
     margin: 0;

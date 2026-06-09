@@ -163,15 +163,6 @@ function computeStats(grid: ContributionGrid): {
   return { totalCommits, totalPRs, currentStreak }
 }
 
-// ── Tooltip ──────────────────────────────────────────────────────────────
-
-interface TooltipState {
-  x: number
-  y: number
-  count: number
-  date: Date
-}
-
 // ── Main Component ───────────────────────────────────────────────────────
 
 const CELL_SIZE = 10
@@ -191,8 +182,6 @@ export function ContributionHeatmap({
     () => externalStats ?? computeStats(data),
     [data, externalStats],
   )
-
-  const [tooltip, setTooltip] = useState<TooltipState | null>(null)
 
   // Month labels (abbreviated, one per column starting a new month)
   const monthLabels = useMemo(() => {
@@ -310,32 +299,12 @@ export function ContributionHeatmap({
                     height={CELL_SIZE}
                     rx={2}
                     fill={color}
-                    className="cursor-pointer transition-all duration-75 hover:brightness-90 print:stroke-black/20"
+                    className="cursor-pointer transition-all duration-75 hover:brightness-90 print:stroke-black/20 heatmap-cell"
                     stroke={
                       level > 0 ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)'
                     }
                     strokeWidth={0.5}
-                    onMouseEnter={(e) => {
-                      const rect = (
-                        e.currentTarget as SVGRectElement
-                      ).getBoundingClientRect()
-                      setTooltip({
-                        x: rect.left + rect.width / 2,
-                        y: rect.top - 8,
-                        count: day.count,
-                        date: day.date,
-                      })
-                    }}
-                    onMouseLeave={() => setTooltip(null)}
-                    onFocus={() => {
-                      setTooltip({
-                        x: 0,
-                        y: 0,
-                        count: day.count,
-                        date: day.date,
-                      })
-                    }}
-                    onBlur={() => setTooltip(null)}
+                    data-tip={`${day.count} commit${day.count !== 1 ? 's' : ''} · ${day.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`}
                     tabIndex={0}
                     role="button"
                     aria-label={`${day.count} commit${day.count !== 1 ? 's' : ''} on ${day.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`}
@@ -355,30 +324,6 @@ export function ContributionHeatmap({
           )}
         </svg>
 
-        {/* ── Tooltip ──────────────────────────────────────────────── */}
-        {tooltip && (
-          <div
-            className="fixed z-50 -translate-x-1/2 pointer-events-none"
-            style={{
-              left: tooltip.x,
-              top: tooltip.y,
-            }}
-          >
-            <div className="rounded-md bg-slate-800 px-2.5 py-1 text-[10px] text-white shadow-lg whitespace-nowrap">
-              <span className="font-semibold">
-                {tooltip.count} commit{tooltip.count !== 1 ? 's' : ''}
-              </span>{' '}
-              on{' '}
-              {tooltip.date.toLocaleDateString('en-US', {
-                weekday: 'short',
-                month: 'short',
-                day: 'numeric',
-                year: 'numeric',
-              })}
-              <div className="absolute left-1/2 -translate-x-1/2 top-full w-0 h-0 border-x-4 border-x-transparent border-t-4 border-t-slate-800" />
-            </div>
-          </div>
-        )}
       </div>
 
       {/* ── Legend ──────────────────────────────────────────────────── */}

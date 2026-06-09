@@ -102,12 +102,12 @@ export function ClaimDensityVisualizer({
               {/* Bar track */}
               <div className="flex-1 h-2.5 rounded-full bg-slate-100 overflow-hidden max-w-[140px]">
                 <div
-                  className={`h-full rounded-full transition-all duration-200 ${
+                  className={`h-full rounded-full transform origin-left transition-all duration-200 ${
                     isHovered
                       ? 'bg-indigo-400'
                       : 'bg-indigo-300/60'
                   }`}
-                  style={{ width: barW }}
+                  style={{ transform: `scaleX(${barW} / 140)` }}
                 />
               </div>
 

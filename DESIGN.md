@@ -274,3 +274,16 @@ The palette is a single cool-blue tonal ramp from near-black to pale gray, with 
 - **Don't** ship a label like "Empower your AI journey" or "Unlock the future of coding." Specific nouns and verbs; the product is an open-source AI app builder, not a movement.
 - **Don't** add a second dark mode shade. The system is single-theme dark. Light mode is technically wired (`next-themes`) but unused; leave it dormant.
 - **Don't** wipe the resume on every prompt. The sandbox is the recruiter's working artifact; the agent patches it. Replacing the full resume on each turn is a regression to the pre-sandbox model. See the Resume Sandbox rule.
+
+## Token Contract
+
+Components may only use semantic Tailwind classes backed by tokens in `app/globals.css`:
+
+- **Surfaces:** `bg-background`, `bg-card`, `bg-popover`, `bg-secondary`, `bg-accent`, `bg-input`, `bg-primary`, `bg-destructive`, `bg-surface-elevated`
+- **Text:** `text-foreground`, `text-muted-foreground`, `text-primary`, and matching `*-foreground` pairs (`text-card-foreground`, `text-primary-foreground`, …)
+- **Borders/focus:** `border-border`, `ring` (focus rings via `focus-visible:ring-2 focus-visible:ring-ring`)
+- **Opacity modifiers allowed:** e.g. `bg-primary/10`, `border-primary/20`
+
+**Forbidden:** raw hex values, `slate-*`, `indigo-*`, ad-hoc `rgba(...)` colors.
+
+**Single exception:** the A4 resume sheet print region keeps its fixed print palette, marked with the comment `/* A4 PRINT PALETTE — fixed by design */`. Everything outside that comment scope follows this contract.

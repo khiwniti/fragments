@@ -289,6 +289,11 @@ export function ResumeCanvas() {
     [agent, copilotkit],
   )
 
+  /** Print/PDF export — opens the browser print dialog for the resume-only viewport. */
+  const handlePrint = useCallback(() => {
+    window.print()
+  }, [])
+
   /** Evidence popover: click the provenance anchor on a claim. */
   const handleEvidence = useCallback((claim: string, detail: string) => {
     setEvidence({ claim, detail, x: 0, y: 0 })
@@ -622,13 +627,13 @@ export function ResumeCanvas() {
     return (
       <div
         id="resume-print-root"
-        className="mx-auto w-full max-w-[210mm] rounded-md border border-slate-200 bg-white p-12 text-center"
+        className="mx-auto w-full max-w-[210mm] rounded-md border border-border bg-card p-12 text-center"
       >
         <div className="space-y-4">
-          <p className="text-lg font-medium text-slate-600">
+          <p className="text-lg font-medium text-muted-foreground">
             Resume Assistant
           </p>
-          <p className="text-sm text-slate-400">
+          <p className="text-sm text-muted-foreground/60">
             Use the assistant to build your resume interactively.
           </p>
         </div>
@@ -653,8 +658,8 @@ export function ResumeCanvas() {
                 key={tag}
                 className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-[10px] font-medium transition-colors cursor-default ${
                   activeTech === tag
-                    ? 'bg-indigo-100 text-indigo-700 ring-1 ring-indigo-300'
-                    : 'bg-slate-50 text-slate-500 border border-slate-200'
+                    ? 'bg-primary/10 text-primary ring-1 ring-primary/30'
+                    : 'bg-accent/50 text-muted-foreground border border-border/80'
                 }`}
                 onMouseEnter={() => setActiveTech(tag)}
                 onMouseLeave={() => setActiveTech(null)}
@@ -664,10 +669,25 @@ export function ResumeCanvas() {
             ))}
           </div>
         )}
-        <div className="mt-6 flex justify-center">
+        <div className="mt-6 flex items-center justify-center gap-3 print:hidden">
+          {/* Download PDF */}
           <button
             type="button"
-            className="improve-button inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-5 py-2.5 text-sm font-medium text-slate-700 shadow-sm transition-colors hover:bg-slate-50 hover:border-indigo-300 hover:text-indigo-700 disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={handlePrint}
+            className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:border-primary/30 hover:text-primary"
+          >
+            <svg className="h-4 w-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="7 10 12 15 17 10" />
+              <line x1="12" y1="15" x2="12" y2="3" />
+            </svg>
+            Download PDF
+          </button>
+
+          {/* Improve with AI */}
+          <button
+            type="button"
+            className="inline-flex items-center gap-2 rounded-lg border border-primary/30 bg-card px-5 py-2.5 text-sm font-medium text-foreground shadow-sm transition-colors hover:bg-accent hover:border-primary/50 hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
             onClick={() => {
               if (agent.isRunning) return
               agent.addMessage({
@@ -682,7 +702,7 @@ export function ResumeCanvas() {
           >
             {agent.isRunning ? (
               <>
-                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-slate-300 border-t-indigo-600" />
+                <span className="inline-block h-3 w-3 animate-spin rounded-full border-2 border-border border-t-primary" />
                 Improving&hellip;
               </>
             ) : (

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useId, useState } from 'react'
+import { useMemo, useId, useState, useRef, useLayoutEffect } from 'react'
 import { Sparkles } from 'lucide-react'
 import { DeepPartial } from 'ai'
 
@@ -87,6 +87,17 @@ export function TechRadar({
 }: TechRadarProps) {
   const uid = useId()
   const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [renderWidth, setRenderWidth] = useState(width)
+
+  // Responsive: measure container width and clamp to design width
+  useLayoutEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setRenderWidth(Math.min(width, e.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [width])
 
   const N = axes.length
   const pad = 48 // room for labels outside the chart
@@ -137,12 +148,12 @@ export function TechRadar({
   // ── Render ─────────────────────────────────────────────────────────────
 
   return (
-    <div className="flex flex-col items-center print:inline-block">
+    <div ref={wrapRef} className="w-full max-w-full">
       <svg
-        width={width}
-        height={height}
+        width={renderWidth}
+        height={renderWidth}
         viewBox={`0 0 ${width} ${height}`}
-        className="overflow-visible"
+        className="max-w-full overflow-visible"
         role="img"
         aria-label={`Skill radar chart with ${N} axes: ${axes.map((a) => a.label).join(', ')}`}
       >

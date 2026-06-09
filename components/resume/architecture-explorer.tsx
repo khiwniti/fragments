@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo, useId } from 'react'
+import { useState, useMemo, useId, useRef, useLayoutEffect } from 'react'
 import {
   ChevronDown,
   ChevronRight,
@@ -212,8 +212,21 @@ export function ArchitectureExplorer({
       : [p.x + NODE_W / 2, p.y]
   }
 
+  // ── Responsive SVG wrapper ───────────────────────────────────────────
+  const svgRef = useRef<HTMLDivElement>(null)
+  const [renderWidth, setRenderWidth] = useState(svgWidth)
+
+  useLayoutEffect(() => {
+    const el = svgRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setRenderWidth(Math.min(svgWidth, e.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [svgWidth])
+
   return (
-    <div className="border border-slate-200 rounded-md bg-white overflow-hidden print:border-black">
+    <div ref={svgRef} className="w-full max-w-full">
+      <div className="border border-slate-200 rounded-md bg-white overflow-hidden print:border-black">
       {/* ── Header ──────────────────────────────────────────────────── */}
       <button
         type="button"
@@ -235,10 +248,10 @@ export function ArchitectureExplorer({
         <div className="px-3 pb-3 space-y-3">
           {/* ── SVG Architecture Diagram ─────────────────────────────── */}
           <svg
-            width={svgWidth}
-            height={svgHeight}
+            width={renderWidth}
+            height={(renderWidth / svgWidth) * svgHeight}
             viewBox={`0 0 ${svgWidth} ${svgHeight}`}
-            className="w-full h-auto overflow-visible"
+            className="max-w-full h-auto overflow-visible"
             role="img"
             aria-label={`Architecture diagram with ${nodes.length} components`}
           >
@@ -452,5 +465,6 @@ export function ArchitectureExplorer({
         </div>
       )}
     </div>
+  </div>
   )
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo, useState, useId } from 'react'
+import { useMemo, useState, useId, useRef, useLayoutEffect } from 'react'
 import { BarChart3, PieChart } from 'lucide-react'
 
 // ── Types ────────────────────────────────────────────────────────────────
@@ -65,9 +65,9 @@ function BarsChart({
   highlightedLanguage,
   activeTech,
   onTechFocus,
-}: LanguageChartProps & { data: LanguageStat[] }) {
-  const uid = useId()
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  hoveredIdx,
+  setHoveredIdx,
+}: LanguageChartProps & { data: LanguageStat[]; hoveredIdx: number | null; setHoveredIdx: (i: number | null) => void }) {
   const total = data.reduce((s, d) => s + d.percentage, 0)
   const barHeight = 18
   const gap = 4
@@ -76,16 +76,27 @@ function BarsChart({
   const barMaxW = 160
   const H = data.length * (barHeight + gap) + 4
   const W = labelW + barMaxW + pctW
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [renderWidth, setRenderWidth] = useState(W)
+
+  useLayoutEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setRenderWidth(Math.min(W, e.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [W])
 
   return (
-    <svg
-      width={W}
-      height={H}
-      viewBox={`0 0 ${W} ${H}`}
-      role="img"
-      aria-label="Language distribution bar chart"
-      className="overflow-visible"
-    >
+    <div ref={wrapRef} className="w-full max-w-full">
+      <svg
+        width={renderWidth}
+        height={(renderWidth / W) * H}
+        viewBox={`0 0 ${W} ${H}`}
+        role="img"
+        aria-label="Language distribution bar chart"
+        className="max-w-full overflow-visible"
+      >
       {data.map((lang, i) => {
         const y = 2 + i * (barHeight + gap)
         const barW = (lang.percentage / (total || 100)) * barMaxW
@@ -183,6 +194,7 @@ function BarsChart({
         )
       })}
     </svg>
+  </div>
   )
 }
 
@@ -195,9 +207,9 @@ function DonutChart({
   highlightedLanguage,
   activeTech,
   onTechFocus,
-}: LanguageChartProps & { data: LanguageStat[] }) {
-  const uid = useId()
-  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
+  hoveredIdx,
+  setHoveredIdx,
+}: LanguageChartProps & { data: LanguageStat[]; hoveredIdx: number | null; setHoveredIdx: (i: number | null) => void }) {
   const total = data.reduce((s, d) => s + d.percentage, 0)
   const size = 120
   const cx = size / 2
@@ -205,6 +217,16 @@ function DonutChart({
   const radius = 44
   const strokeW = 16
   const innerR = radius - strokeW / 2
+  const wrapRef = useRef<HTMLDivElement>(null)
+  const [renderWidth, setRenderWidth] = useState(size + 50)
+
+  useLayoutEffect(() => {
+    const el = wrapRef.current
+    if (!el) return
+    const ro = new ResizeObserver(([e]) => setRenderWidth(Math.min(size + 50, e.contentRect.width)))
+    ro.observe(el)
+    return () => ro.disconnect()
+  }, [size])
 
   // Arc path helper
   let cumulativeAngle = -Math.PI / 2 // Start from top
@@ -234,14 +256,15 @@ function DonutChart({
   })
 
   return (
-    <svg
-      width={size + 50}
-      height={size + 50}
-      viewBox={`0 0 ${size + 50} ${size + 50}`}
-      role="img"
-      aria-label="Language distribution donut chart"
-      className="overflow-visible"
-    >
+    <div ref={wrapRef} className="w-full max-w-full">
+      <svg
+        width={renderWidth}
+        height={renderWidth}
+        viewBox={`0 0 ${size + 50} ${size + 50}`}
+        role="img"
+        aria-label="Language distribution donut chart"
+        className="max-w-full overflow-visible"
+      >
       <g transform={`translate(25, 25)`}>
         {/* Background circle */}
         <circle cx={cx} cy={cy} r={innerR} fill="none" stroke="#f1f5f9" strokeWidth={strokeW} />
@@ -333,6 +356,7 @@ function DonutChart({
         </text>
       </g>
     </svg>
+  </div>
   )
 }
 
@@ -341,6 +365,7 @@ function DonutChart({
 export function LanguageChart(props: LanguageChartProps) {
   const data = useMemo(() => props.data ?? defaultLanguageData(), [props.data])
   const [variant, setVariant] = useState<'bars' | 'donut'>(props.variant ?? 'bars')
+  const [hoveredIdx, setHoveredIdx] = useState<number | null>(null)
 
   return (
     <div className="print:inline-block">
@@ -376,10 +401,10 @@ export function LanguageChart(props: LanguageChartProps) {
 
       {/* Chart */}
       {variant === 'bars' ? (
-        <BarsChart {...props} data={data} />
+        <BarsChart {...props} data={data} hoveredIdx={hoveredIdx} setHoveredIdx={setHoveredIdx} />
       ) : (
         <div className="flex justify-center">
-          <DonutChart {...props} data={data} />
+          <DonutChart {...props} data={data} hoveredIdx={hoveredIdx} setHoveredIdx={setHoveredIdx} />
         </div>
       )}
     </div>

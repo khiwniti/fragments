@@ -251,7 +251,7 @@ export function ContributionHeatmap({
       </div>
 
       {/* ── SVG Grid ────────────────────────────────────────────────── */}
-      <div className="relative">
+      <div className="overflow-x-auto">
         <svg
           width={W}
           height={H}
@@ -299,45 +299,57 @@ export function ContributionHeatmap({
               const color = getColor(day.count)
               const level = getLevel(day.count)
 
+              // 44px hit target centered on 10px cell
+              const hitOffset = 17 // (44 - 10) / 2
               return (
-                <rect
-                  key={`cell-${wi}-${di}`}
-                  x={cx}
-                  y={cy}
-                  width={CELL_SIZE}
-                  height={CELL_SIZE}
-                  rx={2}
-                  fill={color}
-                  className="cursor-pointer transition-all duration-75 hover:brightness-90 print:stroke-black/20"
-                  stroke={
-                    level > 0 ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)'
-                  }
-                  strokeWidth={0.5}
-                  onMouseEnter={(e) => {
-                    const rect = (
-                      e.currentTarget as SVGRectElement
-                    ).getBoundingClientRect()
-                    setTooltip({
-                      x: rect.left + rect.width / 2,
-                      y: rect.top - 8,
-                      count: day.count,
-                      date: day.date,
-                    })
-                  }}
-                  onMouseLeave={() => setTooltip(null)}
-                  onFocus={() => {
-                    setTooltip({
-                      x: 0,
-                      y: 0,
-                      count: day.count,
-                      date: day.date,
-                    })
-                  }}
-                  onBlur={() => setTooltip(null)}
-                  tabIndex={0}
-                  role="button"
-                  aria-label={`${day.count} commit${day.count !== 1 ? 's' : ''} on ${day.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`}
-                />
+                <g key={`cell-${wi}-${di}`}>
+                  <rect
+                    x={cx}
+                    y={cy}
+                    width={CELL_SIZE}
+                    height={CELL_SIZE}
+                    rx={2}
+                    fill={color}
+                    className="cursor-pointer transition-all duration-75 hover:brightness-90 print:stroke-black/20"
+                    stroke={
+                      level > 0 ? 'rgba(0,0,0,0.04)' : 'rgba(0,0,0,0.06)'
+                    }
+                    strokeWidth={0.5}
+                    onMouseEnter={(e) => {
+                      const rect = (
+                        e.currentTarget as SVGRectElement
+                      ).getBoundingClientRect()
+                      setTooltip({
+                        x: rect.left + rect.width / 2,
+                        y: rect.top - 8,
+                        count: day.count,
+                        date: day.date,
+                      })
+                    }}
+                    onMouseLeave={() => setTooltip(null)}
+                    onFocus={() => {
+                      setTooltip({
+                        x: 0,
+                        y: 0,
+                        count: day.count,
+                        date: day.date,
+                      })
+                    }}
+                    onBlur={() => setTooltip(null)}
+                    tabIndex={0}
+                    role="button"
+                    aria-label={`${day.count} commit${day.count !== 1 ? 's' : ''} on ${day.date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric', year: 'numeric' })}`}
+                  />
+                  {/* 44px invisible hit target */}
+                  <rect
+                    x={cx - hitOffset}
+                    y={cy - hitOffset}
+                    width={44}
+                    height={44}
+                    fill="transparent"
+                    pointerEvents="all"
+                  />
+                </g>
               )
             }),
           )}

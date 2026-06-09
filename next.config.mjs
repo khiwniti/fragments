@@ -1,6 +1,9 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
+  turbopack: {
+    root: '/Users/admin/tmp-khiw.dev/fragments',
+  },
 
   images: {
     remotePatterns: [

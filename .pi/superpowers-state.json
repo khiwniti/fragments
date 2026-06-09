@@ -30,9 +30,10 @@
     "phase": "idle",
     "testFiles": [],
     "sourceFiles": [
-      "components/resume/credential-timeline.tsx",
-      "components/resume/claim-density.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/components/resume-canvas.tsx"
+      "/Users/admin/tmp-khiw.dev/fragments/components/resume/tech-radar.tsx",
+      "/Users/admin/tmp-khiw.dev/fragments/components/resume/contribution-heatmap.tsx",
+      "/Users/admin/tmp-khiw.dev/fragments/components/resume/language-chart.tsx",
+      "/Users/admin/tmp-khiw.dev/fragments/components/resume/architecture-explorer.tsx"
     ],
     "redVerificationPending": false
   },

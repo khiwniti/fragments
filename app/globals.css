@@ -28,6 +28,7 @@
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);
+  --color-surface-elevated: hsl(var(--surface-elevated));
 }
 
 :root {
@@ -56,6 +57,7 @@
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
   --radius: 0.625rem;
+  --surface-elevated: 216 30% 13%; /* #161e2a */
 }
 
 .dark {
@@ -83,6 +85,7 @@
   --chart-3: 197 37% 24%;
   --chart-4: 43 74% 66%;
   --chart-5: 27 87% 67%;
+  --surface-elevated: 216 30% 13%; /* #161e2a */
 }
 
 /* Base reset - use native CSS instead of @apply for border */
@@ -103,8 +106,8 @@ a {
 }
 
 ::selection {
-  background: rgba(52, 211, 153, 0.3);
-  color: #e2e8f0;
+  background: hsl(var(--primary) / 0.3);
+  color: hsl(var(--foreground));
 }
 
 ::-webkit-scrollbar {
@@ -120,10 +123,10 @@ a {
 
 /* Utility classes */
 .text-balance { text-wrap: balance; }
-.text-accent-dim { color: rgba(52, 211, 153, 0.5); }
-.bg-accent-surface { background: rgba(52, 211, 153, 0.05); }
-.border-accent-hover { border-color: rgba(52, 211, 153, 0.2); }
-.glow-accent { box-shadow: 0 0 10px rgba(52, 211, 153, 0.5); }
+.text-accent-dim { color: hsl(var(--primary) / 0.5); }
+.bg-accent-surface { background: hsl(var(--primary) / 0.05); }
+.border-accent-hover { border-color: hsl(var(--primary) / 0.2); }
+.glow-accent { box-shadow: 0 0 10px hsl(var(--primary) / 0.5); }
 .font-mono-app { font-family: var(--font-mono, "JetBrains Mono", "Geist Mono", monospace); }
 .reveal { opacity: 0; transform: translateY(18px); transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1), transform 0.7s cubic-bezier(0.22, 1, 0.36, 1); }
 .reveal-visible { opacity: 1; transform: none; }
@@ -136,32 +139,61 @@ a {
 
 /* ── A4 resume print path + ResumeCanvas print isolation ─────────────────── */
 @media print {
-  body * {
-    visibility: hidden;
+  /* Hide everything outside the resume root */
+  body > *, body * {
+    visibility: hidden !important;
   }
   .a4-print-root,
   .a4-print-root *,
   #resume-print-root,
   #resume-print-root * {
-    visibility: visible;
+    visibility: visible !important;
   }
+
+  /* Position the resume root at page top-left */
   .a4-print-root,
   #resume-print-root {
-    position: absolute;
-    inset: 0;
+    position: absolute !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: auto !important;
+    bottom: auto !important;
     overflow: visible !important;
-  }
-  .a4-sheet-wrap {
+    max-width: none !important;
     width: auto !important;
     height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
+
+  /* A4 sheet wrap: force full paper size (match @page A4) */
+  .a4-sheet-wrap {
+    width: 210mm !important;
+    height: 297mm !important;
+    page-break-after: always;
+    break-after: page;
+  }
+  .a4-sheet-wrap:last-child {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+
+  /* Sheet itself: flat, no scaling, no shadow, no overflow clipping */
   .a4-sheet {
     transform: none !important;
     box-shadow: none !important;
-    break-after: page;
+    width: 210mm !important;
+    height: 297mm !important;
+    overflow: visible !important;
   }
+
+  /* Interiors inside the sheet that are on-screen interactive only */
+  .a4-sheet .print\:hidden {
+    display: none !important;
+  }
+
   @page {
-    size: A4;
+    size: A4 portrait;
     margin: 0;
   }
 }

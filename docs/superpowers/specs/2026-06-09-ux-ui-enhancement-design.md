@@ -22,7 +22,7 @@
 
 ## Scope
 
-- Truly headless chat UI on `useCopilotChatHeadless_c` (custom components, no CopilotKit CSS).
+- Truly headless chat UI on the v2 `useAgent` + `useCopilotKit().runAgent` pattern (custom components, no CopilotKit CSS, no Cloud license key).
 - App-wide token consistency (chat, resume outer UI, landing, navbar, all components).
 - Responsive, accessibility, and performance fixes from the audit.
 - CopilotKit wiring verification (runtime route, agent, dependency cleanup).
@@ -64,14 +64,17 @@ project tokens + existing shadcn/ui primitives:
 | Component | Responsibility |
 |---|---|
 | `chat-panel.tsx` | Fixed right panel (`bg-card border-l border-border`); layout: message scroll area + input dock; collapsible on mobile (slides over canvas) |
-| `message-list.tsx` | Renders messages from `useCopilotChatHeadless_c`; user bubbles `bg-accent`, assistant transparent `text-foreground`; shared markdown renderer |
-| `chat-input.tsx` | Textarea + send button (`bg-input`/`ring` tokens); Enter sends, Shift+Enter newline; disabled while `isLoading` |
-| `suggestions.tsx` | Pill buttons (DESIGN.md chip style) fed by the hook's suggestions API |
+| `message-list.tsx` | Renders `agent.messages`; user bubbles `bg-accent`, assistant transparent `text-foreground`; shared markdown renderer |
+| `chat-input.tsx` | Textarea + send button (`bg-input`/`ring` tokens); Enter sends, Shift+Enter newline; disabled while `agent.isRunning` |
+| `suggestions.tsx` | Pill buttons (DESIGN.md chip style); static starter prompts (no Cloud suggestions API) |
 | `tool-render.tsx` | Generative UI slot: agent tool calls / shared-state widgets inline in the stream; same tokens, loading skeletons, error states |
 
-**Data flow:** `useCopilotChatHeadless_c` → `messages`, `sendMessage`,
-`isLoading`, suggestions. `ResumeCanvas` keeps reading shared state via
-`useAgent` exactly as today. No backend changes.
+**Data flow:** v2 `useAgent({ agentId: 'resume' })` provides
+`agent.messages` / `agent.isRunning`; sending = `agent.addMessage({...})` +
+`useCopilotKit().copilotkit.runAgent({ agent })`. (Decision: the originally
+spec'd `useCopilotChatHeadless_c` hook requires a CopilotKit Cloud public API
+key; the `useAgent` pattern is key-free and is what `ResumeCanvas` already
+uses — both surfaces share one agent connection.) No backend changes.
 
 **Error handling:** runtime/agent errors render as an inline system message
 (`text-destructive-foreground bg-destructive/20`) with a retry button.

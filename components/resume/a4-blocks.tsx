@@ -176,6 +176,9 @@ function TechBadge({
       onMouseLeave={() => onTechFocus?.(null)}
       onFocus={() => onTechFocus?.(tag)}
       onBlur={() => onTechFocus?.(null)}
+      onKeyDown={e => {
+        if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); onTechFocus?.(tag) }
+      }}
       className={`inline-flex items-center text-[9px] px-1.5 rounded border leading-4 cursor-default transition-all duration-150
         ${
           isActive

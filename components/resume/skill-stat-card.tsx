@@ -232,6 +232,8 @@ export function SkillStatCard({
       <button
         type="button"
         onClick={() => setIsVisible(!isVisible)}
+        aria-expanded={isVisible}
+        aria-controls="skill-stat-details"
         className="flex w-full items-center justify-between px-3 py-1.5 text-xs font-semibold text-slate-700 hover:bg-slate-50 transition-colors print:hover:bg-transparent"
       >
         <span className="flex items-center gap-1.5">
@@ -244,7 +246,7 @@ export function SkillStatCard({
       </button>
 
       {isVisible && (
-        <div className="px-3 pb-3 space-y-2.5">
+        <div id="skill-stat-details" className="px-3 pb-3 space-y-2.5">
           {/* Radar + Key Metrics row */}
           <div className="flex items-start gap-4">
             <MiniRadar values={stat.radar} />

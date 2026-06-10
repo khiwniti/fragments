@@ -1,47 +1,20 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { Suspense, useState } from 'react'
 import { CopilotKit } from '@copilotkit/react-core/v2'
-import { CopilotSidebar } from '@copilotkit/react-core/v2'
-import '@copilotkit/react-core/v2/styles.css'
 import { ResumeCanvas } from '@/components/resume-canvas'
 import { ResumeForm } from '@/components/resume-form'
 import { PullUpChat } from '@/components/pull-up-chat'
-import { useConfigureSuggestions } from '@copilotkit/react-core/v2'
+import { ChatPanel } from '@/components/chat-panel/chat-panel'
 
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(false)
-  useEffect(() => {
-    const mql = window.matchMedia(query)
-    setMatches(mql.matches)
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches)
-    mql.addEventListener('change', handler)
-    return () => mql.removeEventListener('change', handler)
-  }, [query])
-  return matches
-}
-
-function Suggestions() {
-  useConfigureSuggestions({
-    suggestions: [
-      { title: 'Summarize my resume', message: 'Give me a professional summary of my resume.' },
-      { title: 'Highlight experience', message: 'Highlight my most relevant experience for a lead role.' },
-      { title: 'Suggest improvements', message: 'Suggest improvements to my resume.' },
-      { title: 'Top skills', message: 'What are my top skills and how do they rank?' },
-    ],
-    available: 'always',
-  })
-  return null
-}
+const AUTO_START_PROMPT = 'Give me a professional summary of my resume, highlighting my key strengths, experience, and projects.'
 
 export default function ChatPage() {
-  const isMobile = useMediaQuery('(max-width: 767px)')
   const [view, setView] = useState<'resume' | 'edit'>('resume')
   const agentId = 'resume'
 
   return (
     <CopilotKit runtimeUrl="/api/copilotkit" agent={agentId}>
-      <Suggestions />
       <div className="flex min-h-dvh w-full bg-background">
         {/* Main content */}
         <main className="flex-1 overflow-y-auto print:p-0 pb-20 md:pb-0">
@@ -76,27 +49,19 @@ export default function ChatPage() {
           </div>
         </main>
 
-        {/* Desktop: CopilotSidebar */}
-        {!isMobile && (
-          <CopilotSidebar
-            agentId={agentId}
-            defaultOpen
-            labels={{
-              modalHeaderTitle: 'Resume AI Chat',
-              chatInputPlaceholder: 'Ask about experience, skills, or projects...',
-              welcomeMessageText: 'Ask me anything about my experience, skills, or projects.',
-            }}
-          />
-        )}
+        {/* Chat surfaces wrapped in Suspense for useSearchParams */}
+        <Suspense fallback={null}>
+          {/* Desktop: headless chat column */}
+          <ChatPanel agentId={agentId} initialPrompt={AUTO_START_PROMPT} />
 
-        {/* Mobile: pull-up chat drawer */}
-        {isMobile && (
+          {/* Mobile: headless pull-up drawer */}
           <PullUpChat
             agentId={agentId}
             title="Resume AI Chat"
             description="Ask me anything about my experience"
+            initialPrompt={AUTO_START_PROMPT}
           />
-        )}
+        </Suspense>
       </div>
     </CopilotKit>
   )

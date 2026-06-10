@@ -45,8 +45,8 @@ export default function RootLayout({
         <body className={`${geist.variable} ${geistMono.variable} font-sans`}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="system"
-            enableSystem
+            defaultTheme="light"
+            forcedTheme="light"
             disableTransitionOnChange
           >
             {children}

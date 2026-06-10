@@ -1,16 +1,17 @@
 'use client'
 
 import { useState, useRef, useEffect, useCallback } from 'react'
-import { CopilotChat } from '@copilotkit/react-core/v2'
+import { Conversation } from './chat-panel/conversation'
 
 interface PullUpChatProps {
   agentId: string
   title: string
   description: string
   defaultHeight?: number
+  initialPrompt?: string
 }
 
-export function PullUpChat({ agentId, title, description, defaultHeight = 50 }: PullUpChatProps) {
+export function PullUpChat({ agentId, title, description, defaultHeight = 50, initialPrompt }: PullUpChatProps) {
   const [isOpen, setIsOpen] = useState(false)
   const [height, setHeight] = useState(defaultHeight)
   const [isDragging, setIsDragging] = useState(false)
@@ -158,7 +159,7 @@ export function PullUpChat({ agentId, title, description, defaultHeight = 50 }: 
 
         {/* Chat body */}
         <div className="chat-drawer-body">
-          <CopilotChat agentId={agentId} className="h-full flex flex-col" />
+          <Conversation agentId={agentId} initialPrompt={initialPrompt} />
         </div>
       </div>
     </>

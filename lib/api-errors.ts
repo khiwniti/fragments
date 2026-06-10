@@ -65,9 +65,7 @@ export function handleAPIError(
     )
   }
 
-  // Generic error handling — log details server-side, return safe generic to client
-  console.error('API Error:', error)
-
+  // Generic error handling — return safe generic to client (logged above)
   return new Response(
     'An unexpected error has occurred. Please try again later.',
     { status: 500 },

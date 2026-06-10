@@ -1,10 +1,17 @@
 import { cookies } from 'next/headers'
 import { SignJWT, jwtVerify } from 'jose'
+import { timingSafeEqual } from 'node:crypto'
 
 const ADMIN_PASSWORD = process.env.ADMIN_PASSWORD
-const JWT_SECRET = new TextEncoder().encode(
-  process.env.ADMIN_JWT_SECRET || 'fragments-admin-fallback-secret-change-me'
-)
+const RAW_JWT_SECRET = process.env.ADMIN_JWT_SECRET
+
+if (!RAW_JWT_SECRET) {
+  throw new Error(
+    'ADMIN_JWT_SECRET environment variable is required. ' +
+    'Set it to a secure random value (e.g., openssl rand -hex 32).'
+  )
+}
+const JWT_SECRET = new TextEncoder().encode(RAW_JWT_SECRET)
 
 export interface AdminSession {
   isAdmin: boolean
@@ -44,7 +51,8 @@ export async function isAdminAuthenticated(): Promise<boolean> {
 
 export async function adminLogin(password: string): Promise<boolean> {
   if (!ADMIN_PASSWORD) return false
-  return password === ADMIN_PASSWORD
+  if (password.length !== ADMIN_PASSWORD.length) return false
+  return timingSafeEqual(Buffer.from(password), Buffer.from(ADMIN_PASSWORD))
 }
 
 export async function adminLogout(): Promise<void> {

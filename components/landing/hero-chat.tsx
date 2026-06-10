@@ -30,7 +30,7 @@ export function HeroChat() {
     <div className="min-h-screen bg-background max-w-[720px] mx-auto w-full relative px-4 md:px-6 flex flex-col items-center justify-center py-20">
       {/* Subtle gradient background */}
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full opacity-[0.015] dark:opacity-[0.03]"
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] rounded-full opacity-[0.04] text-primary"
           style={{ background: 'radial-gradient(ellipse at center, currentColor 0%, transparent 70%)' }}
         />
       </div>

@@ -551,7 +551,7 @@ export function ResumeCanvas() {
               activeTech={activeTech}
               onTechFocus={handleTechFocus}
             />
-            <div className="flex flex-col gap-4 md:flex-row md:items-start justify-center py-4 print:py-3">
+            <div className="flex flex-col items-center gap-4 py-4 print:py-3">
               <TechRadar
                 axes={axes}
                 comparison={{
@@ -622,6 +622,10 @@ export function ResumeCanvas() {
     agent,
   ])
 
+  // Track whether the AI is running its initial auto-analysis (no AI response yet)
+  const hasAssistantMessage = agent.messages?.some((m: { role: string }) => m.role === 'assistant')
+  const initialAnalysis = agent.isRunning && !hasAssistantMessage
+
   // ── Render ─────────────────────────────────────────────────────────────
   if (!state?.resume?.sections?.length) {
     return (
@@ -650,6 +654,23 @@ export function ResumeCanvas() {
         />
       )}
       <div id="resume-print-root" className="mx-auto w-full max-w-[210mm]">
+        {/* Loading banner on the resume page itself — visible during initial auto-analysis */}
+        {initialAnalysis && (
+          <div className="mb-4 flex items-center gap-3 rounded-xl border border-primary/20 bg-primary/5 px-5 py-3 print:hidden animate-fade-in motion-reduce:animate-none">
+            <span className="relative flex h-3 w-3">
+              <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75 motion-reduce:animate-none" />
+              <span className="relative inline-flex rounded-full h-3 w-3 bg-primary" />
+            </span>
+            <div className="flex flex-col gap-0.5">
+              <span className="text-sm font-medium text-foreground">
+                AI is analyzing your resume
+              </span>
+              <span className="text-xs text-muted-foreground">
+                Generating a professional summary and insights&hellip;
+              </span>
+            </div>
+          </div>
+        )}
         <A4Pager blocks={blocks} />
         {allTags.length > 0 && (
           <div className="mt-4 flex flex-wrap justify-center gap-2 print:hidden">

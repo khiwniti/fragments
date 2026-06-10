@@ -12,6 +12,11 @@ export interface GraphIndex {
 }
 
 let _index: GraphIndex | null = null
+let _indexExpiresAt = 0
+
+/** TTL for cached graph index in milliseconds (default: 5 minutes) */
+const GRAPH_CACHE_TTL_MS =
+  Number(process.env.GRAPH_CACHE_TTL_MS) || 300_000
 
 const RESERVED_NODE_KEYS = new Set([
   'id','type','label','slug','tags','confidence','career_value',
@@ -83,7 +88,7 @@ function neoEdgeToGraphEdge(r: Record<string, unknown>): GraphEdge {
 }
 
 export async function buildIndex(): Promise<GraphIndex> {
-  if (_index) return _index
+  if (_index && Date.now() < _indexExpiresAt) return _index
 
   // Fetch all nodes with an id property
   const nodeRows = await runCypher<{ node: Record<string, unknown> }>(
@@ -154,9 +159,20 @@ export async function buildIndex(): Promise<GraphIndex> {
     outEdges,
     inEdges,
   }
+  _indexExpiresAt = Date.now() + GRAPH_CACHE_TTL_MS
   return _index
 }
 
 export function clearGraphCache() {
   _index = null
+  _indexExpiresAt = 0
+}
+
+/**
+ * Refresh the graph index if the cached version has expired.
+ * Useful to call before critical queries when stale data is unacceptable.
+ */
+export async function refreshIndex(): Promise<GraphIndex> {
+  clearGraphCache()
+  return buildIndex()
 }

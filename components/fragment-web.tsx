@@ -28,7 +28,7 @@ export function FragmentWeb({ result }: { result: ExecutionResultWeb }) {
         src={result.url}
       />
       <div className="p-2 border-t">
-        <div className="flex items-center bg-muted dark:bg-white/10 rounded-2xl">
+        <div className="flex items-center bg-muted rounded-2xl">
           <TooltipProvider>
             <Tooltip delayDuration={0}>
               <TooltipTrigger asChild>

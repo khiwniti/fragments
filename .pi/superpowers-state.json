@@ -27,28 +27,17 @@
     }
   },
   "tdd": {
-    "phase": "red-pending",
-    "testFiles": [
-      "/Users/admin/tmp-khiw.dev/fragments/e2e/home.spec.ts",
-      "/Users/admin/tmp-khiw.dev/fragments/e2e/chat.spec.ts"
-    ],
+    "phase": "idle",
+    "testFiles": [],
     "sourceFiles": [
-      "/Users/admin/tmp-khiw.dev/fragments/lib/profile.ts",
-      "/Users/admin/tmp-khiw.dev/fragments/app/layout.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/app/page.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/components/landing/hero-chat.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/components/landing/hero-widget.tsx",
+      "/Users/admin/tmp-khiw.dev/fragments/components/chat-panel/conversation.tsx",
+      "/Users/admin/tmp-khiw.dev/fragments/components/chat-panel/chat-panel.tsx",
       "/Users/admin/tmp-khiw.dev/fragments/components/pull-up-chat.tsx",
       "/Users/admin/tmp-khiw.dev/fragments/app/chat/page.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/components/resume-form.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/components/resume-canvas.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/lib/project-agent.ts",
-      "/Users/admin/tmp-khiw.dev/fragments/app/api/copilotkit-project/[[...slug]]/route.ts",
-      "/Users/admin/tmp-khiw.dev/fragments/components/project-focus-panel.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/app/projects/[slug]/page.tsx",
-      "/Users/admin/tmp-khiw.dev/fragments/components/landing/projects-widget.tsx"
+      "/Users/admin/tmp-khiw.dev/fragments/components/chat-panel/message-list.tsx",
+      "/Users/admin/tmp-khiw.dev/fragments/components/resume-canvas.tsx"
     ],
-    "redVerificationPending": true
+    "redVerificationPending": false
   },
   "debug": {
     "active": false,

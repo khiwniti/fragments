@@ -14,34 +14,90 @@ export function PullUpChat({ agentId, title, description, defaultHeight = 50 }: 
   const [isOpen, setIsOpen] = useState(false)
   const [height, setHeight] = useState(defaultHeight)
   const [isDragging, setIsDragging] = useState(false)
+  const closeRef = useRef<HTMLButtonElement>(null)
   const dragStartRef = useRef<{ y: number; height: number }>({ y: 0, height: defaultHeight })
 
-  const handleDragStart = useCallback((e: React.MouseEvent) => {
+  // --- Escape key to close ---
+  useEffect(() => {
+    if (!isOpen) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setIsOpen(false)
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [isOpen])
+
+  // --- Body scroll lock ---
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => { document.body.style.overflow = '' }
+  }, [isOpen])
+
+  // --- Auto-focus close button on open ---
+  useEffect(() => {
+    if (isOpen) closeRef.current?.focus()
+  }, [isOpen])
+
+  // --- Shared drag start ---
+  const dragStart = useCallback((clientY: number, currentHeight: number) => {
     setIsDragging(true)
-    dragStartRef.current = { y: e.clientY, height }
-    e.preventDefault()
+    dragStartRef.current = { y: clientY, height: currentHeight }
   }, [height])
+
+  // --- Shared drag move ---
+  const dragMove = useCallback((clientY: number) => {
+    if (!isDragging) return
+    const deltaY = dragStartRef.current.y - clientY
+    const newHeight = Math.min(85, Math.max(20, dragStartRef.current.height + (deltaY / window.innerHeight) * 100))
+    setHeight(newHeight)
+  }, [isDragging])
+
+  // --- Shared drag end ---
+  const dragEnd = useCallback(() => {
+    setIsDragging(false)
+  }, [])
+
+  // --- Mouse handlers ---
+  const handleMouseDown = useCallback((e: React.MouseEvent) => {
+    dragStart(e.clientY, height)
+    e.preventDefault()
+  }, [height, dragStart])
 
   useEffect(() => {
     if (!isDragging) return
-
-    const handleDragMove = (e: MouseEvent) => {
-      const deltaY = dragStartRef.current.y - e.clientY
-      const newHeight = Math.min(85, Math.max(20, dragStartRef.current.height + (deltaY / window.innerHeight) * 100))
-      setHeight(newHeight)
-    }
-
-    const handleDragEnd = () => {
-      setIsDragging(false)
-    }
-
-    window.addEventListener('mousemove', handleDragMove)
-    window.addEventListener('mouseup', handleDragEnd)
+    const handleMouseMove = (e: MouseEvent) => dragMove(e.clientY)
+    const handleMouseUp = () => dragEnd()
+    window.addEventListener('mousemove', handleMouseMove)
+    window.addEventListener('mouseup', handleMouseUp)
     return () => {
-      window.removeEventListener('mousemove', handleDragMove)
-      window.removeEventListener('mouseup', handleDragEnd)
+      window.removeEventListener('mousemove', handleMouseMove)
+      window.removeEventListener('mouseup', handleMouseUp)
     }
-  }, [isDragging])
+  }, [isDragging, dragMove, dragEnd])
+
+  // --- Touch handlers ---
+  const handleTouchStart = useCallback((e: React.TouchEvent) => {
+    dragStart(e.touches[0].clientY, height)
+  }, [height, dragStart])
+
+  useEffect(() => {
+    if (!isDragging) return
+    const handleTouchMove = (e: TouchEvent) => {
+      // Allow some vertical scroll inside the chat body before dragging kicks in
+      dragMove(e.touches[0].clientY)
+    }
+    const handleTouchEnd = () => dragEnd()
+    window.addEventListener('touchmove', handleTouchMove, { passive: true })
+    window.addEventListener('touchend', handleTouchEnd)
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove)
+      window.removeEventListener('touchend', handleTouchEnd)
+    }
+  }, [isDragging, dragMove, dragEnd])
 
   return (
     <>
@@ -57,17 +113,27 @@ export function PullUpChat({ agentId, title, description, defaultHeight = 50 }: 
       </button>
 
       {/* Backdrop */}
-      {isOpen && <div className="chat-drawer-backdrop md:hidden" onClick={() => setIsOpen(false)} />}
+      {isOpen && (
+        <div
+          className="chat-drawer-backdrop md:hidden"
+          onClick={() => setIsOpen(false)}
+          aria-hidden="true"
+        />
+      )}
 
       {/* Drawer */}
       <div
+        role="dialog"
+        aria-modal="true"
+        aria-label={title}
         className={`chat-drawer md:hidden ${isOpen ? 'open' : 'closed'} ${isDragging ? 'dragging' : ''}`}
         style={{ height: `${height}vh` }}
       >
         {/* Drag handle */}
         <div
           className="chat-drawer-handle"
-          onMouseDown={handleDragStart}
+          onMouseDown={handleMouseDown}
+          onTouchStart={handleTouchStart}
         >
           <div className="chat-drawer-handle-bar" />
         </div>
@@ -79,6 +145,7 @@ export function PullUpChat({ agentId, title, description, defaultHeight = 50 }: 
             <div className="chat-drawer-header-desc">{description}</div>
           </div>
           <button
+            ref={closeRef}
             onClick={() => setIsOpen(false)}
             className="chat-drawer-close"
             aria-label="Close chat"

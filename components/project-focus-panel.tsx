@@ -66,7 +66,22 @@ function ProjectFocusInner({ project }: { project: ProjectData }) {
   })
   const [changedKeys, setChangedKeys] = useState<string[]>([])
   const [showChat, setShowChat] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const isLoading = agent.isRunning
+
+  // --- Mobile drawer: Escape key + body scroll lock ---
+  useEffect(() => {
+    if (!isMobile || !showChat) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') setShowChat(false)
+    }
+    document.body.style.overflow = 'hidden'
+    window.addEventListener('keydown', handler)
+    return () => {
+      document.body.style.overflow = ''
+      window.removeEventListener('keydown', handler)
+    }
+  }, [isMobile, showChat])
 
   useConfigureSuggestions({
     suggestions: [
@@ -111,14 +126,19 @@ function ProjectFocusInner({ project }: { project: ProjectData }) {
     }
   }, [])
 
-  const handleImprove = useCallback(() => {
+  const handleImprove = useCallback(async () => {
     if (isLoading) return
+    setError(null)
     agent.addMessage({
       id: crypto.randomUUID(),
       role: 'user',
       content: `Improve the project "${project.name}". Analyze its strengths, suggest concrete improvements, and relate it to my overall portfolio.`,
     })
-    copilotkit.runAgent({ agent })
+    try {
+      await copilotkit.runAgent({ agent })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to get AI suggestions')
+    }
   }, [agent, copilotkit, isLoading, project.name])
 
   const updateField = (field: string, value: string) => {
@@ -179,15 +199,13 @@ function ProjectFocusInner({ project }: { project: ProjectData }) {
                 </div>
                 <div className="meta-item">
                   <span className="meta-icon">🔗</span>
-                  <a
-                    href={state.url}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="meta-text text-primary hover:underline inline-flex items-center gap-1"
-                  >
-                    {state.url.replace('https://', '').replace('http://', '')}
-                    <ExternalLink className="w-3 h-3" />
-                  </a>
+                  <input
+                    type="url"
+                    value={state.url}
+                    onChange={(e) => updateField('url', e.target.value)}
+                    className="meta-text bg-transparent border-none outline-none w-32 text-primary"
+                    placeholder="https://..."
+                  />
                 </div>
               </div>
             </div>
@@ -250,6 +268,13 @@ function ProjectFocusInner({ project }: { project: ProjectData }) {
             </div>
 
             {/* Improve with AI Button */}
+            {/* Error banner */}
+            {error && (
+              <div className="mt-3 rounded-lg border border-destructive/40 bg-destructive/20 px-3 py-2 text-sm text-destructive-foreground" role="alert">
+                {error}
+              </div>
+            )}
+
             <div className="action-container">
               <button
                 data-testid="improve-button"
@@ -292,8 +317,13 @@ function ProjectFocusInner({ project }: { project: ProjectData }) {
           {/* Mobile chat drawer */}
           {showChat && (
             <>
-              <div className="fixed inset-0 z-30 bg-black/30" onClick={() => setShowChat(false)} />
-              <div className="fixed inset-x-0 bottom-0 z-40 bg-background rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] flex flex-col" style={{ height: '70vh' }}>
+              <div className="fixed inset-0 z-30 bg-black/30" onClick={() => setShowChat(false)} aria-hidden="true" />
+              <div
+                role="dialog"
+                aria-modal="true"
+                aria-label="Chat about this project"
+                className="fixed inset-x-0 bottom-0 z-40 bg-background rounded-t-2xl shadow-[0_-4px_24px_rgba(0,0,0,0.12)] flex flex-col"
+                style={{ height: '70vh' }}>
                 {/* Handle bar */}
                 <div className="flex justify-center pt-3 pb-2 flex-shrink-0">
                   <div className="w-10 h-1 rounded-full bg-muted-foreground/40" />

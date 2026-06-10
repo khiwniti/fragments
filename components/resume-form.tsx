@@ -26,9 +26,9 @@ export function ResumeForm() {
 
   const [state, setState] = useState<ResumeFormState>(INITIAL_STATE)
   const [changedKeys, setChangedKeys] = useState<string[]>([])
-  const [editingSkill, setEditingSkill] = useState<number | null>(null)
   const [newSkill, setNewSkill] = useState('')
   const [showForm, setShowForm] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const isLoading = agent.isRunning
 
   // Sync agent state -> local state
@@ -63,14 +63,19 @@ export function ResumeForm() {
     }
   }
 
-  const handleImprove = () => {
+  const handleImprove = async () => {
     if (isLoading) return
+    setError(null)
     agent.addMessage({
       id: crypto.randomUUID(),
       role: 'user',
       content: 'Improve the resume summary and headline. Make them more compelling.',
     })
-    copilotkit.runAgent({ agent })
+    try {
+      await copilotkit.runAgent({ agent })
+    } catch (e) {
+      setError(e instanceof Error ? e.message : 'Failed to get AI suggestions')
+    }
   }
 
   const updateField = (field: keyof ResumeFormState, value: string | string[]) => {
@@ -89,12 +94,6 @@ export function ResumeForm() {
 
   const removeSkill = (index: number) => {
     const next = { ...state, skills: state.skills.filter((_, i) => i !== index) }
-    setState(next)
-    setAgentState(next)
-  }
-
-  const updateSkill = (index: number, value: string) => {
-    const next = { ...state, skills: state.skills.map((s, i) => i === index ? value : s) }
     setState(next)
     setAgentState(next)
   }
@@ -123,11 +122,9 @@ export function ResumeForm() {
       ) : (
         /* Edit mode - Recipe-style form */
         <div className="space-y-5">
-          {/* Ping animation for changed keys */}
-          {changedKeys.includes('headline') && <Ping />}
-
           {/* Headline */}
-          <div>
+          <div className="relative">
+            {changedKeys.includes('headline') && <Ping />}
             <div className="form-section-header">
               <h3 className="form-section-title">Headline</h3>
             </div>
@@ -140,10 +137,9 @@ export function ResumeForm() {
             />
           </div>
 
-          {changedKeys.includes('summary') && <Ping />}
-
           {/* Summary */}
-          <div>
+          <div className="relative">
+            {changedKeys.includes('summary') && <Ping />}
             <div className="form-section-header">
               <h3 className="form-section-title">Summary</h3>
             </div>
@@ -157,25 +153,11 @@ export function ResumeForm() {
           </div>
 
           {/* Skills */}
-          <div>
+          <div className="relative">
             <div className="form-section-header">
               <h3 className="form-section-title">Top Skills</h3>
-              <button
-                type="button"
-                onClick={() => {
-                  const skill = prompt('Enter a new skill:')
-                  if (skill?.trim()) {
-                    const next = { ...state, skills: [...state.skills, skill.trim()] }
-                    setState(next)
-                    setAgentState(next)
-                  }
-                }}
-                className="form-add-btn"
-              >
-                + Add Skill
-              </button>
             </div>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 mb-3">
               {state.skills.map((skill, index) => (
                 <div key={index} className="form-checkbox-label" style={{ paddingRight: '0.25rem' }}>
                   <span>{skill}</span>
@@ -191,7 +173,34 @@ export function ResumeForm() {
                 </div>
               ))}
             </div>
+            {/* Inline skill input */}
+            <div className="flex items-center gap-2">
+              <input
+                type="text"
+                value={newSkill}
+                onChange={(e) => setNewSkill(e.target.value)}
+                onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addSkill() } }}
+                placeholder="Add a skill…"
+                aria-label="New skill name"
+                className="flex-1 rounded-lg border border-input bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground outline-none focus:border-primary focus:ring-2 focus:ring-ring/20"
+              />
+              <button
+                type="button"
+                onClick={addSkill}
+                disabled={!newSkill.trim()}
+                className="form-add-btn"
+              >
+                + Add
+              </button>
+            </div>
           </div>
+        </div>
+      )}
+
+      {/* Error banner */}
+      {error && (
+        <div className="mt-4 rounded-lg border border-destructive/40 bg-destructive/20 px-3 py-2 text-sm text-destructive-foreground" role="alert">
+          {error}
         </div>
       )}
 

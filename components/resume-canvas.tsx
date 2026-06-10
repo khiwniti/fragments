@@ -633,7 +633,7 @@ export function ResumeCanvas() {
           <p className="text-lg font-medium text-muted-foreground">
             Resume Assistant
           </p>
-          <p className="text-sm text-muted-foreground/60">
+          <p className="text-sm text-muted-foreground">
             Use the assistant to build your resume interactively.
           </p>
         </div>

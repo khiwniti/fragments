@@ -22,13 +22,13 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Ikkyu — AI-Augmented Full-Stack Developer',
-  description: 'Portfolio of Khiw (Ikkyu) Nitithadachot. AI Agent Architect, Full-Stack Developer, and Multi-Agent Systems Engineer.',
+  title: 'Ikkyu — Forward-Deployed Full Stack Developer',
+  description: 'Portfolio of Khiw (Ikkyu) Nitithadachot. Forward-Deployed Full Stack Developer, AI Agent Architect, and Multi-Agent Systems Engineer.',
   keywords: ['AI', 'full-stack', 'developer', 'portfolio', 'khiw.dev', 'Ikkyu', 'TypeScript', 'Next.js', 'LangGraph'],
   authors: [{ name: 'Khiw (Ikkyu) Nitithadachot' }],
   openGraph: {
-    title: 'Ikkyu — AI-Augmented Full-Stack Developer',
-    description: 'Portfolio of Khiw (Ikkyu) Nitithadachot. AI Agent Architect, Full-Stack Developer, and Multi-Agent Systems Engineer.',
+    title: 'Ikkyu — Forward-Deployed Full Stack Developer',
+    description: 'Portfolio of Khiw (Ikkyu) Nitithadachot. Forward-Deployed Full Stack Developer, AI Agent Architect, and Multi-Agent Systems Engineer.',
     url: 'https://khiw.dev',
     siteName: 'khiw.dev',
   },
@@ -45,7 +45,7 @@ export default function RootLayout({
         <body className={`${geist.variable} ${geistMono.variable} font-sans`}>
           <ThemeProvider
             attribute="class"
-            defaultTheme="dark"
+            defaultTheme="system"
             enableSystem
             disableTransitionOnChange
           >

@@ -11,7 +11,7 @@ export function MessageList({ messages, isRunning, error, onRetry }: {
   const ref = useRef<HTMLDivElement>(null)
   useEffect(() => { ref.current?.scrollTo({ top: ref.current.scrollHeight }) }, [messages.length, isRunning])
   return (
-    <div ref={ref} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3" aria-live="polite" aria-label="Chat messages">
+    <div ref={ref} className="flex-1 overflow-y-auto px-4 py-4 flex flex-col gap-3" role="log" aria-live="polite" aria-label="Chat messages">
       {messages.filter(m => m.role === 'user' || m.role === 'assistant').map(m => {
         const isUser = m.role === 'user'
         const text = typeof m.content === 'string' ? m.content : ''

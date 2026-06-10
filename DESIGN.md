@@ -162,7 +162,7 @@ The palette is a single cool-blue tonal ramp from near-black to pale gray, with 
 
 ### Named Rules
 
-**The Mono is a Tool Rule.** Geist Mono is for code, prompts, timestamps, file names, version metadata, footer attribution. It is not the body font. The landing footer attribution is the canonical example: `text-[11px] font-mono` for "Built by Khiw · AI-Augmented Full-Stack Developer".
+**The Mono is a Tool Rule.** Geist Mono is for code, prompts, timestamps, file names, version metadata, footer attribution. It is not the body font. The landing footer attribution is the canonical example: `text-[11px] font-mono` for "Built by Khiw · Forward-Deployed Full Stack Developer".
 
 **The Eyebrow Budget Rule.** One eyebrow per page. A section can use an eyebrow as a deliberate brand system (Linear does this; we do it on the hero). Two or more eyebrows in close vertical proximity becomes the AI scaffold reflex and stops reading as voice.
 

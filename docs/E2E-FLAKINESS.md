@@ -37,7 +37,7 @@ async function scrollToSection(page: Page, sectionTestId: string) {
 | 4 | Career Section | `"Education"` | 2 | Career widget has both a section title and an Education card heading | Use `getByRole('heading', { name: 'Education', level: 2 })` |
 | 5 | Open Source Section | `"kidpen.org"` | 2 | Side project card title + URL link | Use `getByRole('link', { name: /kidpen\.org/ })` |
 | 6 | Career Section | `"Resume"` | 2 | Career widget's "Resume" call-to-action + sidebar profile | Use `getByRole('link', { name: 'Resume' })` |
-| 7 | scrollToSection | `"AI-Augmented Full-Stack Developer"` | 2 | Hero subtitle + footer attribution | Either don't assert the hero text in scrollToSection, or use a more specific locator |
+| 7 | scrollToSection | `"Forward-Deployed Full Stack Developer"` | 2 | Hero subtitle + footer attribution | Either don't assert the hero text in scrollToSection, or use a more specific locator |
 
 ### Recommended refactor
 

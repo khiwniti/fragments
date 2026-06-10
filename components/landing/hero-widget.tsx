@@ -30,10 +30,10 @@ export function HeroWidget() {
       <Reveal delay={0.1}>
         <div className="mt-6 text-center">
           <span className="bg-primary text-primary-foreground px-2 py-1 rounded-md font-bold text-[15px]">
-            AI-Augmented
+            Forward-Deployed
           </span>
           <span className="text-foreground text-[17px] ml-2 font-medium">
-            Full-Stack Developer
+            Full Stack Developer
           </span>
         </div>
       </Reveal>

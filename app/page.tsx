@@ -63,7 +63,7 @@ export default function Home() {
 
       <footer className="max-w-[700px] mx-auto px-6 py-8 text-center border-t border-border">
         <p className="text-[11px] text-muted-foreground font-mono">
-          Built by Khiw (Ikkyu) Nitithadachot · AI-Augmented Full-Stack Developer
+          Built by Khiw (Ikkyu) Nitithadachot · Forward-Deployed Full Stack Developer
         </p>
         <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">
           Next.js · Tailwind · TypeScript · Supabase · Cloudflare

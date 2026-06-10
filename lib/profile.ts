@@ -19,7 +19,7 @@ export const profile: Profile = {
   fullName: 'Khiw (Ikkyu) Nitithadachot',
   displayName: 'Ikkyu N.',
   headline:
-    'MVP AI-Augmented Full Stack Developer | Freelance AI & Data Engineer Team Lead',
+    'Forward-Deployed Full Stack Developer | Freelance AI & Data Engineer Team Lead',
   location: 'Bangkok, Thailand',
   email: 'kiw.brw@gmail.com',
   phone: '+66-82-997-1887',
@@ -27,7 +27,7 @@ export const profile: Profile = {
   linkedin: 'https://www.linkedin.com/in/getintheq/',
   github: 'https://github.com/getintheQ',
   summary:
-    'Full-stack AI/data engineer with a unique engineering-meets-AI trajectory. Started in mechanical engineering (CFD/FEA, nuclear, manufacturing) and pivoted into data/AI in 2023. Seven years of freelance simulation work run in parallel with an accelerating AI engineering practice: LLM agents, knowledge graphs, FastAPI/Next.js full-stack, cloud-native MLOps, and physics-informed neural networks. Proven delivery across government digital transformation (DDPM, TPQI, NDWC), climate-tech (CarbonBIM), and restaurant BI (BiteBase). C2 English, comfortable leading cross-functional teams, and deeply embedded in the Thai AI ecosystem.',
+    'Forward-Deployed Full Stack Developer with a unique engineering-meets-AI trajectory. Started in mechanical engineering (CFD/FEA, nuclear, manufacturing) and pivoted into data/AI in 2023. Seven years of freelance simulation work run in parallel with an accelerating AI engineering practice: LLM agents, knowledge graphs, FastAPI/Next.js full-stack, cloud-native MLOps, and physics-informed neural networks. Proven delivery across government digital transformation (DDPM, TPQI, NDWC), climate-tech (CarbonBIM), and restaurant BI (BiteBase). C2 English, comfortable leading cross-functional teams, and deeply embedded in the Thai AI ecosystem.',
   openToWork: true,
   workPreferences: 'Bangkok · Hybrid · Remote',
   topSkills: [

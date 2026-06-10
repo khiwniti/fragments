@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link'
 import { useState } from 'react';
 import { Reveal } from './reveal';
 import { Label } from './label';
@@ -125,6 +126,15 @@ function ProjectCard({
       <div className="flex items-center gap-2 text-[9px] font-mono text-muted-foreground/60">
         <span className="truncate">{project.url?.replace('https://', '')}</span>
         <span className="shrink-0">↗</span>
+      </div>
+      <div className="mt-2 pt-2 border-t border-border flex items-center gap-2">
+        <Link
+          href={`/projects/${project.name.toLowerCase().replace(/[^a-z0-9]+/g, '-')}`}
+          className="text-[10px] font-medium text-primary hover:text-primary/80 transition-colors no-underline"
+          onClick={(e) => e.stopPropagation()}
+        >
+          AI Focus →
+        </Link>
       </div>
     </div>
   );

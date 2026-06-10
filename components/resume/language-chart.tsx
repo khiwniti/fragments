@@ -399,14 +399,15 @@ export function LanguageChart(props: LanguageChartProps) {
         </div>
       </div>
 
-      {/* Chart */}
-      {variant === 'bars' ? (
+      {/* Chart - both rendered, one hidden for persistent hover state */}
+      <div className={variant === 'bars' ? '' : 'hidden'}>
         <BarsChart {...props} data={data} hoveredIdx={hoveredIdx} setHoveredIdx={setHoveredIdx} />
-      ) : (
+      </div>
+      <div className={variant === 'donut' ? '' : 'hidden'}>
         <div className="flex justify-center">
           <DonutChart {...props} data={data} hoveredIdx={hoveredIdx} setHoveredIdx={setHoveredIdx} />
         </div>
-      )}
+      </div>
     </div>
   )
 }

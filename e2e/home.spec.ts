@@ -226,7 +226,7 @@ test.describe('Landing Page — Full E2E', () => {
   test.describe('Footer', () => {
     test('renders footer with credit text', async ({ page }) => {
       await setupPage(page)
-      await scrollToSection(page, 'AI-Augmented Full-Stack Developer')
+      await scrollToSection(page, 'Forward-Deployed Full Stack Developer')
       await expect(page.getByText(/Built by Khiw/)).toBeVisible()
       await expect(page.getByText(/Next.js/)).toBeVisible()
     })

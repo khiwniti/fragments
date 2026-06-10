@@ -46,7 +46,7 @@ export function HeroChat() {
             Ask me anything
           </h1>
           <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto">
-            Hi, I&apos;m Ikkyu — an AI-Augmented Full-Stack Developer.
+            Hi, I&apos;m Ikkyu — a Forward-Deployed Full Stack Developer.
             Ask about my experience, projects, or skills.
           </p>
         </div>

@@ -13,9 +13,19 @@ export function HeroWidget() {
 
   return (
     <section className="relative min-h-screen flex flex-col items-center justify-center px-6">
+      {/* Single committed accent halo for the hero (PRODUCT.md reserves the
+          committed accent for hero/result moments). A radial-gradient replaces
+          the previous filter: blur(120px) over a 2%-alpha ellipse — that was
+          invisible-by-design yet still forced a blur paint pass on the
+          always-visible first viewport. A gradient is one shader paint, no
+          kernel; the glow is now intentional and sourced from --primary. */}
       <div
-        className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[300px] rounded-full pointer-events-none"
-        style={{ background: 'rgba(52,211,153,0.02)', filter: 'blur(120px)' }}
+        className="pointer-events-none absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[640px] h-[360px] rounded-full -z-10"
+        aria-hidden="true"
+        style={{
+          background:
+            'radial-gradient(ellipse at center, hsl(var(--primary) / 0.10), transparent 70%)',
+        }}
       />
 
       <Reveal>
@@ -50,7 +60,7 @@ export function HeroWidget() {
           <span>📍 Bangkok, Thailand 🇹🇭</span>
           <span className="text-border">·</span>
           <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-card border border-border">
-            <span className="w-1.5 h-1.5 rounded-full bg-[#34d399] animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             Available
           </span>
         </div>
@@ -85,12 +95,17 @@ export function HeroWidget() {
               target="_blank"
               rel="noopener noreferrer"
               title={s.t}
-              className="w-8 h-8 rounded-md flex items-center justify-center border border-border
-                         text-muted-foreground text-[11px] font-mono no-underline
-                         hover:border-primary hover:text-primary hover:bg-accent-surface
-                         transition-all duration-200"
+              aria-label={s.t}
+              // Hit area 44px (WCAG 2.2 2.5.8); the visible 32px tile is a
+              // ::before centered inside a larger transparent tappable box.
+              className="relative h-11 w-11 flex items-center justify-center no-underline
+                         before:absolute before:left-1/2 before:top-1/2 before:-translate-x-1/2 before:-translate-y-1/2
+                         before:w-8 before:h-8 before:rounded-md before:border before:border-border
+                         before:transition-all before:duration-200
+                         text-muted-foreground text-[11px] font-mono
+                         hover:before:border-primary hover:text-primary hover:before:bg-accent-surface"
             >
-              {s.l}
+              <span className="relative z-10">{s.l}</span>
             </a>
           ))}
         </div>

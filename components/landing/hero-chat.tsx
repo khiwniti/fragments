@@ -88,7 +88,7 @@ export function HeroChat() {
           </div>
         </form>
 
-        <p className="text-[10px] text-muted-foreground/40 text-center mt-3 flex items-center gap-1.5">
+        <p className="text-[10px] text-muted-foreground-dim text-center mt-3 flex items-center gap-1.5">
           <MessageSquare className="w-3 h-3" />
           No account required &middot; Sessions save automatically &middot; Full chat history
         </p>

@@ -49,7 +49,7 @@ function ProjectDetailPanel({
             <div className="h-2 w-2 rounded-full bg-primary" />
             <span className="text-xs font-bold text-foreground uppercase tracking-wider font-mono">Project</span>
           </div>
-          <button onClick={onClose} className="flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent-surface transition-colors" aria-label="Close">
+          <button onClick={onClose} className="flex h-11 w-11 items-center justify-center rounded-md text-muted-foreground hover:text-foreground hover:bg-accent-surface transition-colors" aria-label="Close">
             <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
             </svg>
@@ -122,7 +122,7 @@ function ProjectCard({
         <Pill active>{project.tag}</Pill>
       </div>
       <div className="text-[11px] text-muted-foreground leading-[1.5] mb-1.5">{project.description}</div>
-      <div className="flex items-center gap-2 text-[9px] font-mono text-muted-foreground/60">
+      <div className="flex items-center gap-2 text-[9px] font-mono text-muted-foreground-dim">
         <span className="truncate">{project.url?.replace('https://', '')}</span>
         <span className="shrink-0">↗</span>
       </div>

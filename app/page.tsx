@@ -65,7 +65,7 @@ export default function Home() {
         <p className="text-[11px] text-muted-foreground font-mono">
           Built by Khiw (Ikkyu) Nitithadachot · AI-Augmented Full-Stack Developer
         </p>
-        <p className="text-[10px] text-muted-foreground/60 mt-1 font-mono">
+        <p className="text-[10px] text-muted-foreground-dim mt-1 font-mono">
           Next.js · Tailwind · TypeScript · Supabase · Cloudflare
         </p>
       </footer>

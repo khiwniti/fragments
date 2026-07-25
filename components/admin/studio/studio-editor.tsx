@@ -469,6 +469,11 @@ export function StudioEditor({ content, onChange, placeholder = 'Start writing..
                   AI
                 </Button>
                 <div className="w-px h-4 bg-border" />
+                {/* Bubble/floating-menu diamonds sit 4px from the text selection;
+                    the 32px size is intentional — a 44px target would overlap the
+                    selection rectangle and break the editor's spatial cue. Dense
+                    selection-adjacent toolbars follow editor convention, not the
+                    WCAG 2.5.8 general-target minimum. Keep h-8 w-8 here. */}
                 <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => editor.chain().focus().toggleBold().run()}>
                   <Bold className="w-3.5 h-3.5" />
                 </Button>

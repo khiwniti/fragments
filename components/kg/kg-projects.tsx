@@ -65,7 +65,7 @@ export function KGProjects() {
               </CardTitle>
               {p.url && (
                 <Link href={p.url} target="_blank" rel="noopener noreferrer">
-                  <Button variant="ghost" size="icon" className="h-6 w-6">
+                  <Button variant="ghost" size="icon" className="h-11 w-11">
                     <ExternalLink className="h-3 w-3" />
                   </Button>
                 </Link>

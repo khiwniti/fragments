@@ -45,7 +45,7 @@ export function ChatPicker({
               <SelectItem value="auto">
                 <div className="flex items-center space-x-2">
                   <Sparkles
-                    className="flex text-[#a1a1aa]"
+                    className="flex text-muted-foreground"
                     width={14}
                     height={14}
                   />

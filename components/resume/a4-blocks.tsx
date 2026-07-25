@@ -75,8 +75,8 @@ export function ResumeHeaderBlock() {
 
 // ── Interactivity ────────────────────────────────────────────────────────
 // Blocks are render-only by default; when `onSelect` is provided they become
-// clickable drill-down targets, and `highlighted` adds an amber ping. Both
-// are print-safe (no rings/animation on paper).
+// clickable drill-down targets, and `highlighted` adds a warning/gold ping.
+// Both are print-safe (no rings/animation on paper).
 
 export interface InteractiveProps {
   onSelect?: (id: string, label: string) => void
@@ -84,7 +84,7 @@ export interface InteractiveProps {
 }
 
 const HIGHLIGHT_CLASSES =
-  'ring-2 ring-amber-400 animate-pulse rounded-sm print:ring-0 print:animate-none'
+  'ring-2 ring-warning animate-pulse rounded-sm print:ring-0 print:animate-none'
 
 /** Max nesting depth for `item.children` drill-down rendering. */
 const MAX_CHILD_DEPTH = 3

@@ -3,11 +3,11 @@
 export function ScrollIndicator() {
   return (
     <div className="absolute bottom-6 left-0 right-0 flex flex-col items-center gap-1 z-20 pointer-events-none">
-      <span className="text-[10px] font-mono text-muted-foreground/60 uppercase tracking-[3px]">
+      <span className="text-[10px] font-mono text-muted-foreground-dim uppercase tracking-[3px]">
         Scroll
       </span>
         <svg
-          className="h-5 w-5 text-muted-foreground/40 motion-safe:animate-scroll-bob"
+          className="h-5 w-5 text-muted-foreground-dim motion-safe:animate-scroll-bob"
           fill="none"
           viewBox="0 0 24 24"
           stroke="currentColor"

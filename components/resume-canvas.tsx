@@ -20,7 +20,7 @@ import {
  *
  * Renders the CopilotKit `resume` agent's shared state as print-ready A4
  * sheets. Clicking a section heading or item sends a drill-down message to
- * the agent; ids in `state.highlights` get an amber ping after each turn.
+ * the agent; ids in `state.highlights` get a warning/gold ping after each turn.
  *
  * State writes come from the model (AGUISendStateSnapshot) and are
  * prompt-enforced only, so the state is safe-parsed on every render and the

@@ -128,18 +128,18 @@ export default function AdminSeriesPage() {
                     <td className="px-4 py-3">
                       <div className="flex items-center justify-end gap-1">
                         <Link href={`/admin/series/${s.id}/edit`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button variant="ghost" size="icon" className="h-11 w-11">
                             <PenLine className="w-4 h-4" />
                           </Button>
                         </Link>
                         <Link href={`/blog/series/${s.slug}`} target="_blank">
-                          <Button variant="ghost" size="icon" className="h-8 w-8">
+                          <Button variant="ghost" size="icon" className="h-11 w-11">
                             <Layers className="w-4 h-4" />
                           </Button>
                         </Link>
                         <AlertDialog>
                           <AlertDialogTrigger asChild>
-                            <Button variant="ghost" size="icon" className="h-8 w-8 text-destructive">
+                            <Button variant="ghost" size="icon" className="h-11 w-11 text-destructive">
                               <Trash2 className="w-4 h-4" />
                             </Button>
                           </AlertDialogTrigger>

@@ -35,7 +35,7 @@ export function RepoBanner({ className }: { className?: string }) {
         aria-live="polite"
       >
         <StarFilledIcon
-          className="w-4 h-4 transition-transform group-hover:text-[#e4b340] duration-200 ease-in-out"
+          className="w-4 h-4 transition-transform group-hover:text-warning duration-200 ease-in-out"
           aria-label="GitHub stars"
         />
       </div>

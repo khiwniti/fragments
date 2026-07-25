@@ -49,7 +49,7 @@ export function SeriesForm({ mode, initial, onSubmit, submitting }: SeriesFormPr
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div className="flex items-center gap-3">
           <Link href="/admin/series">
-            <Button variant="ghost" size="icon" className="h-8 w-8">
+            <Button variant="ghost" size="icon" className="h-11 w-11">
               <ArrowLeft className="w-4 h-4" />
             </Button>
           </Link>

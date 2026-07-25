@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic'
 
 import { Suspense, useState, useEffect, useCallback, useRef } from 'react'
 import { useSearchParams } from 'next/navigation'
+import type { SupabaseClient } from '@supabase/supabase-js'
 import { Chat } from '@/components/chat'
 import { ChatInput } from '@/components/chat-input'
 import { ChatPicker } from '@/components/chat-picker'
@@ -42,6 +43,57 @@ import '@copilotkit/react-core/v2/styles.css'
 
 const isResumeMode = process.env.NEXT_PUBLIC_RESUME_MODE !== 'false'
 
+// ── Resume mode (CopilotKit shared-state) ────────────────────────────────────
+// Owns its own <CopilotKit> tree; receives only the identity-related state and
+// callbacks it needs. Defined as its own component so the parent's hook order
+// stays stable whether or not resume mode is the active path.
+type ResumeViewProps = {
+  session: Session | null
+  supabase: SupabaseClient | undefined
+  isAuthDialogOpen: boolean
+  authView: import('@/components/auth').ViewType
+  setAuthDialog: (open: boolean) => void
+}
+
+function ResumeModeView({ session, supabase, isAuthDialogOpen, authView, setAuthDialog }: ResumeViewProps) {
+  return (
+    <CopilotKit runtimeUrl="/api/copilotkit" agent="resume" showDevConsole={false}>
+      <main className="flex flex-col h-screen bg-background">
+        <NavBar
+          session={session}
+          showLogin={() => setAuthDialog(true)}
+          signOut={() => supabase?.auth.signOut()}
+          onSocialClick={(target: string) => {
+            if (target === 'github') window.open('https://github.com/getintheq', '_blank')
+            else if (target === 'x') window.open('https://x.com/ikkyuu01', '_blank')
+          }}
+          onClear={() => {}}
+          canClear={false}
+          onUndo={() => {}}
+          canUndo={false}
+          onPrint={() => window.print()}
+        />
+        <div className="flex-1 overflow-auto py-8 print:overflow-visible print:py-0">
+          <ResumeCanvas />
+        </div>
+        <CopilotSidebar
+          agentId="resume"
+          defaultOpen
+          labels={{ modalHeaderTitle: 'Resume Assistant' }}
+        />
+      </main>
+      {supabase && (
+        <AuthDialog
+          open={isAuthDialogOpen}
+          setOpen={setAuthDialog}
+          supabase={supabase}
+          view={authView}
+        />
+      )}
+    </CopilotKit>
+  )
+}
+
 export default function ChatPage() {
   return (
     <Suspense fallback={<div className="h-screen bg-background flex items-center justify-center"><p className="text-sm text-muted-foreground">Loading...</p></div>}>
@@ -74,47 +126,16 @@ function ChatPageInner() {
     (v) => setAuthView(v),
   )
 
-  // ── Resume mode: render CopilotKit shared-state UI ───────────────────────
-  if (isResumeMode) {
-    return (
-      <CopilotKit runtimeUrl="/api/copilotkit" agent="resume" showDevConsole={false}>
-        <main className="flex flex-col h-screen bg-background">
-          <NavBar
-            session={session as Session | null}
-            showLogin={() => setAuthDialog(true)}
-            signOut={() => supabase?.auth.signOut()}
-            onSocialClick={(target) => {
-              if (target === 'github') window.open('https://github.com/getintheq', '_blank')
-              else if (target === 'x') window.open('https://x.com/ikkyuu01', '_blank')
-            }}
-            onClear={() => {}}
-            canClear={false}
-            onUndo={() => {}}
-            canUndo={false}
-            onPrint={() => window.print()}
-          />
-          <div className="flex-1 overflow-auto py-8 print:overflow-visible print:py-0">
-            <ResumeCanvas />
-          </div>
-          <CopilotSidebar
-            agentId="resume"
-            defaultOpen
-            labels={{ modalHeaderTitle: 'Resume Assistant' }}
-          />
-        </main>
-        {supabase && (
-          <AuthDialog
-            open={isAuthDialogOpen}
-            setOpen={setAuthDialog}
-            supabase={supabase}
-            view={authView}
-          />
-        )}
-      </CopilotKit>
-    )
-  }
-
-  // ── Non-resume chat mode (unchanged from prior implementation) ─────────────
+  // All remaining hooks are declared up-front so the rule-of-hooks order is
+  // identical regardless of whether the resume-mode branch returns early. A
+  // previous version of this component declared these inline alongside their
+  // consumers, which made a resume-mode render skip ~12 hooks — fine for that
+  // code path, but it broke hook ordering the moment the resume-mode path was
+  // ever skipped on a later render (eslint react-hooks/rules-of-hooks). Keep
+  // this consolidated block as the single source of truth.
+  const [result, setResult] = useState<ExecutionResult>()
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | undefined>()
 
   const filteredModels = modelsList.models.filter((model) => {
     if (process.env.NEXT_PUBLIC_HIDE_LOCAL_MODELS) {
@@ -214,6 +235,23 @@ function ChatPageInner() {
     return () => clearTimeout(timer)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages])
+
+  // Resume mode is a fully separate surface from the code-builder chat: it
+  // renders its own CopilotKit tree and shares only a few identity-related
+  // callbacks (supabase + setAuthDialog) with the parent. We render it as a
+  // child component so all hooks below fire unconditionally and the parent's
+  // hook order stays stable across both modes (eslint react-hooks/rules-of-hooks).
+  if (isResumeMode) {
+    return (
+      <ResumeModeView
+        session={session as Session | null}
+        supabase={supabase}
+        isAuthDialogOpen={isAuthDialogOpen}
+        authView={authView}
+        setAuthDialog={setAuthDialog}
+      />
+    )
+  }
 
   async function submit(payload: Record<string, unknown>) {
     setIsRateLimited(false)
@@ -397,10 +435,6 @@ function ChatPageInner() {
     setResult(preview.result)
   }
 
-  const [result, setResult] = useState<ExecutionResult>()
-  const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | undefined>()
-
   async function stop() {
     // No-op for chat mode (streaming is not used in this path)
   }
@@ -488,7 +522,7 @@ function ChatPageInner() {
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8"
+              className="h-11 w-11"
               onClick={() => setSidebarOpen(!sidebarOpen)}
               aria-label={sidebarOpen ? 'Close sidebar' : 'Open sidebar'}
             >

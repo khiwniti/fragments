@@ -246,7 +246,7 @@ export function ChatInput({
                       type="button"
                       variant="outline"
                       size="icon"
-                      className="rounded-xl h-10 w-10"
+                      className="rounded-xl h-11 w-11"
                       onClick={(e) => {
                         e.preventDefault()
                         document.getElementById('multimodal')?.click()
@@ -267,9 +267,15 @@ export function ChatInput({
                         type="button"
                         onClick={() => handleFileRemove(file)}
                         aria-label={`Remove ${file.name}`}
-                        className="absolute -top-2 -right-2 bg-secondary border border-border rounded-full p-1 hover:bg-accent transition-colors"
+                        // Visible remove badge stays small, but the tappable
+                        // box expands to 44px (WCAG 2.2 2.5.8) via the
+                        // transparent ::before overlay centered on the badge.
+                        className="absolute -top-2 -right-2 h-11 w-11 flex items-center justify-center group"
                       >
-                        <X className="h-3 w-3" aria-hidden="true" />
+                        <span className="absolute inset-0 block group-hover:bg-accent/30 rounded-full transition-colors" />
+                        <span className="relative bg-secondary border border-border rounded-full p-1 group-hover:bg-accent transition-colors">
+                          <X className="h-3 w-3" aria-hidden="true" />
+                        </span>
                       </button>
                       {previewUrls[i] ? (
                         <img
@@ -295,7 +301,7 @@ export function ChatInput({
                         variant="default"
                         size="icon"
                         type="submit"
-                        className="rounded-xl h-10 w-10"
+                        className="rounded-xl h-11 w-11"
                         aria-label="Send message"
                       >
                         <ArrowUp className="h-5 w-5" aria-hidden="true" />
@@ -311,7 +317,7 @@ export function ChatInput({
                       <Button
                         variant="secondary"
                         size="icon"
-                        className="rounded-xl h-10 w-10"
+                        className="rounded-xl h-11 w-11"
                         onClick={(e) => {
                           e.preventDefault()
                           stop()
@@ -335,7 +341,7 @@ export function ChatInput({
           khiw.dev
         </a>
         <span className="mx-1.5" aria-hidden="true">·</span>
-        <span className="text-muted-foreground/70">Enter to send · Shift+Enter for newline</span>
+        <span className="text-muted-foreground-dim">Enter to send · Shift+Enter for newline</span>
       </p>
     </form>
   )

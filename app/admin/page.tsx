@@ -88,12 +88,12 @@ export default async function AdminDashboardPage() {
                 </div>
                 <div className="flex items-center gap-1 flex-shrink-0 ml-4">
                   <Link href={`/admin/blog/${post.id}/edit`}>
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-11 w-11">
                       <PenLine className="w-4 h-4" />
                     </Button>
                   </Link>
                   <Link href={`/blog/${post.slug}`} target="_blank">
-                    <Button variant="ghost" size="icon" className="h-8 w-8">
+                    <Button variant="ghost" size="icon" className="h-11 w-11">
                       <Eye className="w-4 h-4" />
                     </Button>
                   </Link>

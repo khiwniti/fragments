@@ -8,6 +8,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Save, Loader2 } from 'lucide-react'
 import { BlogSeries } from '@/lib/blog/types'
+import { SmartImage } from '@/components/ui/smart-image'
 
 interface SeriesFormProps {
   mode: 'create' | 'edit'
@@ -117,8 +118,14 @@ export function SeriesForm({ mode, initial, onSubmit, submitting }: SeriesFormPr
             placeholder="https://..."
           />
           {coverImage && (
-            <div className="rounded-lg border border-border overflow-hidden h-40">
-              <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+            <div className="rounded-lg border border-border overflow-hidden h-40 relative">
+              <SmartImage
+                src={coverImage}
+                alt="Cover"
+                fill
+                unoptimized
+                className="w-full h-full object-cover"
+              />
             </div>
           )}
         </div>

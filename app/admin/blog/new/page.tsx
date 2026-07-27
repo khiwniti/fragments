@@ -15,6 +15,7 @@ import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { BlogPost, PostStatus, PostType, POST_TYPE_LABELS } from '@/lib/blog/types'
 import { ArrowLeft, Save, Loader2, Sparkles, ImageIcon } from 'lucide-react'
+import { SmartImage } from '@/components/ui/smart-image'
 
 export default function AdminNewPostPage() {
   const router = useRouter()
@@ -205,8 +206,14 @@ export default function AdminNewPostPage() {
               />
             </div>
             {coverImage && (
-              <div className="rounded-lg border border-border overflow-hidden h-40">
-                <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+              <div className="rounded-lg border border-border overflow-hidden h-40 relative">
+                <SmartImage
+                  src={coverImage}
+                  alt="Cover"
+                  fill
+                  unoptimized
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
           </div>

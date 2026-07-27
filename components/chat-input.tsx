@@ -11,6 +11,7 @@ import {
 import { isFileInArray } from '@/lib/utils'
 import { ArrowUp, Paperclip, Square, X } from 'lucide-react'
 import { SetStateAction, useEffect, useState } from 'react'
+import { SmartImage } from '@/components/ui/smart-image'
 import TextareaAutosize from 'react-textarea-autosize'
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024
@@ -278,9 +279,11 @@ export function ChatInput({
                         </span>
                       </button>
                       {previewUrls[i] ? (
-                        <img
+                        <SmartImage
                           src={previewUrls[i]}
                           alt={file.name}
+                          width={40}
+                          height={40}
                           className="rounded-xl w-10 h-10 object-cover border border-border"
                         />
                       ) : (

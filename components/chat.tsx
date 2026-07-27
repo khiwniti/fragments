@@ -4,6 +4,7 @@ import { ExecutionResult } from '@/lib/types'
 import { DeepPartial } from 'ai'
 import { LoaderIcon, Terminal } from 'lucide-react'
 import { useEffect, useRef } from 'react'
+import { SmartImage } from '@/components/ui/smart-image'
 
 export function Chat({
   messages,
@@ -52,10 +53,12 @@ export function Chat({
               }
               if (content.type === 'image') {
                 return (
-                  <img
+                  <SmartImage
                     key={id}
                     src={content.image}
                     alt="Uploaded image"
+                    width={48}
+                    height={48}
                     className="inline-block w-12 h-12 object-cover rounded-lg border border-border mb-1"
                   />
                 )

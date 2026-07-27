@@ -2,6 +2,7 @@ import { BlogPost } from '@/lib/blog/types'
 import { Badge } from '@/components/ui/badge'
 import Link from 'next/link'
 import { Calendar, Clock, ArrowRight, Layers } from 'lucide-react'
+import { SmartImage } from '@/components/ui/smart-image'
 
 interface BlogPostCardProps {
   post: BlogPost
@@ -53,10 +54,12 @@ export function BlogPostCard({ post, compact, seriesSlug }: BlogPostCardProps) {
     <article className="rounded-xl border border-border bg-card overflow-hidden hover:border-primary/30 transition-all duration-200 group">
       {post.cover_image && (
         <Link href={`/blog/${post.slug}`}>
-          <div className="h-48 overflow-hidden">
-            <img
+          <div className="h-48 overflow-hidden relative">
+            <SmartImage
               src={post.cover_image}
               alt={post.title}
+              fill
+              unoptimized
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             />
           </div>

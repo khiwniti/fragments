@@ -3,6 +3,7 @@ import { BlogPostCard } from '@/components/blog/blog-post-card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import Link from 'next/link'
+import { SmartImage } from '@/components/ui/smart-image'
 import { ArrowLeft, BookOpen, Layers } from 'lucide-react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -71,10 +72,12 @@ export default async function SeriesPage({ params, searchParams }: SeriesPagePro
 
         {/* Cover image */}
         {series.cover_image && (
-          <div className="mb-10 rounded-xl overflow-hidden border border-border">
-            <img
+          <div className="mb-10 rounded-xl overflow-hidden border border-border relative">
+            <SmartImage
               src={series.cover_image}
               alt={series.title}
+              fill
+              unoptimized
               className="w-full h-56 md:h-72 object-cover"
             />
           </div>

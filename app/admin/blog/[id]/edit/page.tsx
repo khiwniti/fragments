@@ -14,6 +14,7 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Skeleton } from '@/components/ui/skeleton'
+import { SmartImage } from '@/components/ui/smart-image'
 import { BlogPost, PostStatus, PostType, POST_TYPE_LABELS } from '@/lib/blog/types'
 import { ArrowLeft, Save, Loader2, Sparkles } from 'lucide-react'
 
@@ -261,8 +262,14 @@ export default function AdminEditPostPage({ params }: { params: Promise<{ id: st
               placeholder="Image URL"
             />
             {coverImage && (
-              <div className="rounded-lg border border-border overflow-hidden h-40">
-                <img src={coverImage} alt="Cover" className="w-full h-full object-cover" />
+              <div className="rounded-lg border border-border overflow-hidden h-40 relative">
+                <SmartImage
+                  src={coverImage}
+                  alt="Cover"
+                  fill
+                  unoptimized
+                  className="w-full h-full object-cover"
+                />
               </div>
             )}
           </div>

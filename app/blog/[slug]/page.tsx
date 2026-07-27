@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { BlogMarkdown } from '@/components/blog/blog-markdown'
 import { BlogPostCard } from '@/components/blog/blog-post-card'
 import Link from 'next/link'
+import { SmartImage } from '@/components/ui/smart-image'
 import { ArrowLeft, ArrowRight, Calendar, Clock, Tag, User } from 'lucide-react'
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
@@ -126,10 +127,12 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
         {/* Cover image */}
         {post.cover_image && (
-          <div className="mb-10 rounded-xl overflow-hidden border border-border">
-            <img
+          <div className="mb-10 rounded-xl overflow-hidden border border-border relative">
+            <SmartImage
               src={post.cover_image}
               alt={post.title}
+              fill
+              unoptimized
               className="w-full h-64 md:h-80 object-cover"
             />
           </div>

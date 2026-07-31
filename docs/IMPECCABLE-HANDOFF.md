@@ -254,3 +254,30 @@ All 33 `text-[10px]/text-[11px]` eyebrow instances audited. Color-role tally: 11
 - `docs/IMPECCABLE-HANDOFF.md` — this resume log.
 
 No color/type edits were needed this session; the audit's theming finding is fully retired in-tree. The remaining work is the toolchain verify + commit.
+
+### P3 follow-ups closure (session 4, post-/impeccable)
+
+Both P3s logged in `impeccable-followups.md` after `db877c3` are now shipped.
+
+**P3 #1 — `<img>` → `next/image` via `<SmartImage>` wrapper — committed `1e06291`:**
+- New `components/ui/smart-image.tsx` wraps `next/image` with three conveniences:
+  - Blob/data URLs auto-force `unoptimized` (lets chat-preview and inbound-image callers omit the prop).
+  - `fill` is opt-in per call site (so chat sites can use explicit dimensions).
+  - Auto-default `sizes` to `'(max-width: 768px) 100vw, 768px'` for `fill` callers.
+- Eight `<img>` sites migrated; the six fluid blog-cover parents each got `relative` added since `next/image fill` requires it.
+- Decision: `unoptimized` for the six blog covers because covers are admin-pasted arbitrary URLs. `remotePatterns: [{ hostname: '**' }]` would have made `/_next/image?url=...` an open proxy.
+- `npm run lint` post-migration: 0 errors, 0 warnings (down from 8).
+
+**P3 #2 — ESLint 9 + `eslint-config-next@16` (flat config) — committed `5b16f29`:**
+- Migrated legacy `.eslintrc.json` (`{ "extends": "next/core-web-vitals" }`) to `eslint.config.mjs` using the native flat-config export at `eslint-config-next/core-web-vitals`. (FlatCompat shim trips a known circular-structure bug against v16 configs.)
+- New v16 ruleset flagged 8 patterns across 10 files; all resolved inline:
+  - **`react-hooks/refs`** in `resume-canvas.tsx`: ref + write-during-render → `useReducer` dispatched during render (the React Compiler-approved pattern).
+  - **`react-hooks/set-state-in-effect`** in 5 files: `deploy-dialog` derives `displayedPublishedURL` from a `lastPublishedFor === url` check; `auth.tsx` uses the React-docs canonical prop-sync pattern (`prevView` + guarded setState during render); `chat/page.tsx`, `blog/search/page.tsx`, `lib/auth.ts` defer synchronous setState via `queueMicrotask`.
+  - **`react-hooks/preserve-manual-memoization`** in `studio-editor.tsx`: dropped `useCallback` around `setLink`/`addImage` — TipTap's editor mutates identity at runtime, busting memoization; inlining is the React Compiler path.
+  - **`react-hooks/immutability`** in `admin/blog/page.tsx`, `admin/series/page.tsx`: hoisted `fetchPosts`/`fetchSeries` declarations above their `useEffect` callers.
+- `npm run lint` post-migration: 0 errors, 0 warnings.
+- `npm run build` post-migration: ✓.
+
+**Followups memory deleted** (was `impeccable-followups.md`); `MEMORY.md` index updated.
+
+Final state of the Impeccable track: pass complete + both P3s closed. `npm run lint` and `npm run build` are both green at zero.

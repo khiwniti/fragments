@@ -39,7 +39,6 @@ export function ChatInput({
   isMultiModal,
   files,
   handleFileChange,
-  children,
   isResumeMode,
 }: {
   retry: () => void
@@ -54,7 +53,6 @@ export function ChatInput({
   isMultiModal: boolean
   files: File[]
   handleFileChange: (change: SetStateAction<File[]>) => void
-  children: React.ReactNode
   isResumeMode?: boolean
 }) {
   const [fileError, setFileError] = useState<string | null>(null)
@@ -164,12 +162,6 @@ export function ChatInput({
     }
   }
 
-  useEffect(() => {
-    if (!isMultiModal) {
-      handleFileChange([])
-    }
-  }, [isMultiModal, handleFileChange])
-
   const showError = isErrored || fileError
   const errorText = fileError || errorMessage
   const errorIsRate = isRateLimited && !fileError
@@ -216,11 +208,10 @@ export function ChatInput({
               : ''
           }`}
         >
-          <div className="flex items-center px-3 py-2 gap-1">{children}</div>
           <TextareaAutosize
             minRows={1}
             maxRows={12}
-            className="text-normal px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none max-h-[40vh]"
+            className="text-sm px-3 resize-none ring-0 bg-inherit w-full m-0 outline-none"
             required={true}
             placeholder={isResumeMode ? "Ask about experience, skills, or projects..." : "Describe your app..."}
             disabled={isErrored}

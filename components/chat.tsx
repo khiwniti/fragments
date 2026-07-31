@@ -40,7 +40,7 @@ export function Chat({
         const isUser = message.role === 'user'
         return (
           <div
-            className={`flex flex-col px-4 py-3 rounded-2xl max-w-[90%] font-sans transition-colors ${
+            className={`flex flex-col px-4 py-3 rounded-2xl max-w-[90%] transition-colors ${
               isUser
                 ? 'self-end bg-primary/10 text-foreground border border-primary/20 gap-2'
                 : 'self-start bg-secondary text-secondary-foreground border border-border gap-3'
@@ -79,10 +79,10 @@ export function Chat({
                   <Terminal strokeWidth={2} className="text-primary" />
                 </div>
                 <div className="pl-2 pr-4 flex flex-col">
-                  <span className="font-medium font-sans text-sm text-foreground">
+                  <span className="font-medium text-sm text-foreground">
                     {message.object.title}
                   </span>
-                  <span className="font-sans text-xs text-muted-foreground">
+                  <span className="text-xs text-muted-foreground">
                     Click to see fragment
                   </span>
                 </div>

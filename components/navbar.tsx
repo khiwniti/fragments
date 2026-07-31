@@ -81,36 +81,40 @@ export function NavBar({
           </Button>
         </Link>
         <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
-        <TooltipProvider>
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onUndo}
-                disabled={!canUndo || !onUndo}
-              >
-                <Undo className="h-4 w-4 md:h-5 md:w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Undo</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
-        <TooltipProvider>
-          <Tooltip delayDuration={0}>
-            <TooltipTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                onClick={onClear}
-                disabled={!canClear || !onClear}
-              >
-                <Trash className="h-4 w-4 md:h-5 md:w-5" />
-              </Button>
-            </TooltipTrigger>
-            <TooltipContent>Clear chat</TooltipContent>
-          </Tooltip>
-        </TooltipProvider>
+        {onUndo && (
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onUndo}
+                  disabled={!canUndo}
+                >
+                  <Undo className="h-4 w-4 md:h-5 md:w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Undo</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
+        {onClear && (
+          <TooltipProvider>
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={onClear}
+                  disabled={!canClear}
+                >
+                  <Trash className="h-4 w-4 md:h-5 md:w-5" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>Clear chat</TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+        )}
         {onPrint && (
           <TooltipProvider>
             <Tooltip delayDuration={0}>

@@ -18,8 +18,7 @@ import { supabase } from '@/lib/supabase'
 import { Message, toAISDKMessages, toMessageImage } from '@/lib/messages'
 import { LLMModelConfig } from '@/lib/models'
 import modelsList from '@/lib/models.json'
-import { FragmentSchema, fragmentSchema } from '@/lib/schema'
-import { starterChips } from '@/lib/profile'
+import { FragmentSchema } from '@/lib/schema'
 import defaultTemplates from '@/lib/templates'
 import { ExecutionResult } from '@/lib/types'
 import { DeepPartial } from 'ai'
@@ -30,6 +29,7 @@ import {
   getOrCreateAnonId,
   persistSession,
   loadSession,
+  restoreActiveSession,
   saveActiveSessionId,
   startNewSession,
   listSessions,
@@ -67,10 +67,6 @@ function ResumeModeView({ session, supabase, isAuthDialogOpen, authView, setAuth
             if (target === 'github') window.open('https://github.com/getintheq', '_blank')
             else if (target === 'x') window.open('https://x.com/ikkyuu01', '_blank')
           }}
-          onClear={() => {}}
-          canClear={false}
-          onUndo={() => {}}
-          canUndo={false}
           onPrint={() => window.print()}
         />
         <div className="flex-1 overflow-auto py-8 print:overflow-visible print:py-0">
@@ -116,7 +112,6 @@ function ChatPageInner() {
   const [conversations, setConversations] = useState<SavedSession[]>([])
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const [currentConversationId, setCurrentConversationId] = useState<string | null>(null)
-  const [showArtifactPanel, setShowArtifactPanel] = useState(false)
   const [errorMessage, setErrorMessage] = useState('')
   const [isRateLimited, setIsRateLimited] = useState(false)
   const [isAuthDialogOpen, setAuthDialog] = useState(false)
@@ -134,8 +129,11 @@ function ChatPageInner() {
   // ever skipped on a later render (eslint react-hooks/rules-of-hooks). Keep
   // this consolidated block as the single source of truth.
   const [result, setResult] = useState<ExecutionResult>()
+  // `loading` mirrors the in-flight `/api/chat` fetch. The artifact panel has
+  // its own dedicated `isPreviewLoading` (toggled separately inside `submit`)
+  // so the chat bubble indicator and the preview spinner can race independently
+  // when the response streams but the preview is still warming up.
   const [loading, setLoading] = useState(false)
-  const [error, setError] = useState<string | undefined>()
 
   const filteredModels = modelsList.models.filter((model) => {
     if (process.env.NEXT_PUBLIC_HIDE_LOCAL_MODELS) {
@@ -260,6 +258,7 @@ function ChatPageInner() {
   async function submit(payload: Record<string, unknown>) {
     setIsRateLimited(false)
     setErrorMessage('')
+    setLoading(true)
     setIsPreviewLoading(true)
     try {
       const response = await fetch('/api/chat', {
@@ -290,6 +289,7 @@ function ChatPageInner() {
           { type: 'code', text: result.code || '' },
         ],
         object: result as DeepPartial<FragmentSchema>,
+        result: result as ExecutionResult,
       }
       setMessages((prev) => [...prev, msg])
       setFragment(result as DeepPartial<FragmentSchema>)
@@ -299,6 +299,7 @@ function ChatPageInner() {
       const message = err instanceof Error ? err.message : 'Something went wrong'
       setErrorMessage(message)
     } finally {
+      setLoading(false)
       setIsPreviewLoading(false)
     }
   }
@@ -344,7 +345,6 @@ function ChatPageInner() {
     setChatInput('')
     setFiles([])
     setCurrentConversationId(null)
-    setShowArtifactPanel(false)
     setErrorMessage('')
     setIsRateLimited(false)
   }
@@ -477,7 +477,7 @@ function ChatPageInner() {
                 key={conv.id}
                 className={`group relative flex items-center gap-2 px-3 py-2 rounded-lg text-sm transition-colors ${
                   currentConversationId === conv.id
-                    ? 'bg-primary/10 text-foreground'
+                    ? 'bg-primary/10 text-primary'
                     : 'text-muted-foreground hover:bg-accent hover:text-foreground focus-within:bg-accent focus-within:text-foreground'
                 }`}
               >
@@ -558,9 +558,7 @@ function ChatPageInner() {
         <div className="flex-1 flex overflow-hidden">
           <div
             className={`flex flex-col min-w-0 px-4 overflow-hidden ${
-              showArtifactPanel || fragment
-                ? 'flex-1'
-                : 'flex-1 w-full max-w-[800px] mx-auto'
+              fragment ? 'flex-1' : 'flex-1 w-full max-w-[800px] mx-auto'
             }`}
           >
             <Chat
@@ -570,8 +568,8 @@ function ChatPageInner() {
             />
             <ChatInput
               retry={() => submit({})}
-              isErrored={!!error}
-              errorMessage={error || errorMessage}
+              isErrored={!!errorMessage}
+              errorMessage={errorMessage}
               isLoading={loading}
               isRateLimited={isRateLimited}
               stop={stop}
@@ -582,16 +580,10 @@ function ChatPageInner() {
               files={files}
               handleFileChange={handleFileChange}
               isResumeMode={false}
-            >
-              {false && (
-                <div className="text-xs text-muted-foreground">
-                  Model: {currentModel.name}
-                </div>
-              )}
-            </ChatInput>
+            />
           </div>
 
-          {(showArtifactPanel || fragment) && (
+          {fragment && (
             <div className="w-[55%] min-w-[420px] max-w-[680px] border-l border-border bg-card shrink-0">
               <Preview
                 teamID={userTeam?.id}
@@ -602,7 +594,10 @@ function ChatPageInner() {
                 isPreviewLoading={isPreviewLoading}
                 fragment={fragment}
                 result={result as ExecutionResult}
-                onClose={() => setFragment(undefined)}
+                onClose={() => {
+                  setFragment(undefined)
+                  setResult(undefined)
+                }}
               />
             </div>
           )}
@@ -619,9 +614,4 @@ function ChatPageInner() {
     )}
     </div>
   )
-}
-
-// Alias for backward compat with restoreActiveSession import above
-function restoreActiveSession(): SavedSession | null {
-  return null
 }

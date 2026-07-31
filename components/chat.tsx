@@ -36,14 +36,26 @@ export function Chat({
       aria-live="polite"
       aria-label="Chat messages"
     >
+      {messages.length === 0 && !isLoading && (
+        <div className="flex flex-1 items-center justify-center px-4 text-center">
+          <div className="flex flex-col gap-1.5 max-w-[420px]">
+            <span className="text-sm font-medium text-foreground">
+              Start a conversation
+            </span>
+            <span className="text-xs text-muted-foreground-dim">
+              Describe what you want to build. Use the starter chips on the home page or type directly below.
+            </span>
+          </div>
+        </div>
+      )}
       {messages.map((message: Message, index: number) => {
         const isUser = message.role === 'user'
         return (
           <div
-            className={`flex flex-col px-4 py-3 rounded-2xl max-w-[90%] transition-colors ${
+            className={`flex flex-col px-4 py-3 rounded-2xl max-w-[90%] gap-2 transition-colors ${
               isUser
-                ? 'self-end bg-primary/10 text-foreground border border-primary/20 gap-2'
-                : 'self-start bg-secondary text-secondary-foreground border border-border gap-3'
+                ? 'self-end bg-primary/10 text-foreground border border-primary/20'
+                : 'self-start bg-secondary text-secondary-foreground border border-border'
             }`}
             key={index}
           >

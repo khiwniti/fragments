@@ -27,18 +27,22 @@ export default async function AboutPage() {
   const certifications = await getCertifications()
   const skills = await getSkills({ featuredOnly: true })
 
+  function navigateToChat() {
+    if (typeof window !== 'undefined') window.location.href = '/chat'
+  }
+  function handleSocialClick(target: 'github' | 'x') {
+    if (target === 'github') window.open('https://github.com/getintheq', '_blank')
+    else if (target === 'x') window.open('https://x.com/ikkyuu01', '_blank')
+  }
+
   return (
     <main className="min-h-screen bg-background">
       <div className="max-w-5xl mx-auto px-4 py-8">
         <NavBar
           session={null}
-          showLogin={() => {}}
+          showLogin={navigateToChat}
           signOut={() => {}}
-          onClear={() => {}}
-          canClear={false}
-          onSocialClick={() => {}}
-          onUndo={() => {}}
-          canUndo={false}
+          onSocialClick={handleSocialClick}
         />
 
         {/* Hero */}

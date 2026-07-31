@@ -42,10 +42,6 @@ export default function Home() {
           showLogin={() => setAuthDialog(true)}
           signOut={logout}
           onSocialClick={handleSocialClick}
-          onClear={() => {}}
-          canClear={false}
-          canUndo={false}
-          onUndo={() => {}}
         />
       </div>
 

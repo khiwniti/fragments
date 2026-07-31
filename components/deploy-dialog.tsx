@@ -35,11 +35,13 @@ export function DeployDialog({
   const posthog = usePostHog()
 
   const [publishedURL, setPublishedURL] = useState<string | null>(null)
+  const [lastPublishedFor, setLastPublishedFor] = useState<string | null>(null)
   const [duration, setDuration] = useState<string | null>(null)
 
-  useEffect(() => {
-    setPublishedURL(null)
-  }, [url])
+  // Derive "the URL we're currently showing as published" from the input URL —
+  // when the input URL changes, the previously published URL no longer applies.
+  // This avoids a setState-in-effect to reset state on prop change.
+  const displayedPublishedURL = lastPublishedFor === url ? publishedURL : null
 
   async function publishURL(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault()
@@ -51,6 +53,7 @@ export function DeployDialog({
       accessToken,
     )
     setPublishedURL(publishedURL)
+    setLastPublishedFor(url)
     posthog.capture('publish_url', {
       url: publishedURL,
     })
@@ -74,10 +77,10 @@ export function DeployDialog({
           The fragment will be available up until the expiration date you choose.
         </div>
         <form className="flex flex-col gap-2" onSubmit={publishURL}>
-          {publishedURL ? (
+          {displayedPublishedURL ? (
             <div className="flex items-center gap-2">
-              <Input value={publishedURL} readOnly />
-              <CopyButton content={publishedURL} />
+              <Input value={displayedPublishedURL} readOnly />
+              <CopyButton content={displayedPublishedURL} />
             </div>
           ) : (
             <Select onValueChange={(value) => setDuration(value)} required>
@@ -99,9 +102,9 @@ export function DeployDialog({
           <Button
             type="submit"
             variant="default"
-            disabled={publishedURL !== null}
+            disabled={displayedPublishedURL !== null}
           >
-            {publishedURL ? 'Deployed' : 'Accept and deploy'}
+            {displayedPublishedURL ? 'Deployed' : 'Accept and deploy'}
           </Button>
         </form>
       </DropdownMenuContent>

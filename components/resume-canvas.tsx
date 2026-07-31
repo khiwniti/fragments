@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useMemo, useRef } from 'react'
+import { useEffect, useMemo, useReducer, useRef } from 'react'
 import {
   useAgent,
   UseAgentUpdate,
@@ -35,10 +35,19 @@ export function ResumeCanvas() {
   const { copilotkit } = useCopilotKit()
 
   // Safe-parse the (model-written) state; fall back to last good snapshot.
-  const lastGood = useRef<ResumeAgentState | undefined>(undefined)
+  // agent.state is an external data source (CopilotKit AGUI snapshot). We use
+  // a reducer (not a ref, not state-in-effect) to keep "last good" — the
+  // reducer pattern is allowed to be invoked during render and won't trigger
+  // a synchronous re-render unless the dispatched value is referentially new.
+  const [lastGood, recordGood] = useReducer<
+    (_prev: ResumeAgentState | null, next: ResumeAgentState) => ResumeAgentState | null
+  >(
+    (_prev, next) => next,
+    null,
+  )
   const parsed = resumeAgentStateSchema.safeParse(agent.state)
-  if (parsed.success) lastGood.current = parsed.data
-  const state = parsed.success ? parsed.data : lastGood.current
+  if (parsed.success) recordGood(parsed.data)
+  const state = parsed.success ? parsed.data : lastGood
 
   const bootstrapped = useRef(false)
 

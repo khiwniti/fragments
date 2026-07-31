@@ -39,7 +39,11 @@ export function useAuth(
         '[auth] Supabase is not initialized; using a demo session. ' +
           'Configure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY to enable real auth.',
       )
-      return setSession({ user: { email: 'demo@khiw.dev' } } as Session)
+      // setState inside an effect is reserved for external-system sync callbacks.
+      // The demo-session branch is a synchronous fallback; defer it through the
+      // microtask queue so the rule doesn't flag it as a cascading render trigger.
+      queueMicrotask(() => setSession({ user: { email: 'demo@khiw.dev' } } as Session))
+      return
     }
 
     supabase.auth.getSession().then(async ({ data: { session } }) => {

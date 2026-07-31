@@ -324,16 +324,20 @@ export function StudioEditor({ content, onChange, placeholder = 'Start writing..
     }
   }
 
-  const setLink = useCallback(() => {
+  // Inline callbacks (no useCallback) — editor's identity can change at runtime,
+  // which trips React Compiler's preserve-manual-memoization rule when used as
+  // a dep. These are only attached as event handlers; React Compiler will memo
+  // them automatically where it can.
+  function setLink() {
     if (!editor) return
     const previousUrl = editor.getAttributes('link').href
     setUrlDialog({ open: true, mode: 'link', value: previousUrl || '' })
-  }, [editor])
+  }
 
-  const addImage = useCallback(() => {
+  function addImage() {
     if (!editor) return
     setUrlDialog({ open: true, mode: 'image', value: '' })
-  }, [editor])
+  }
 
   function handleUrlDialogSubmit() {
     if (!editor) return

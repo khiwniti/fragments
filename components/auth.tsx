@@ -560,7 +560,13 @@ function Auth({
   onSignUpValidate,
   metadata,
 }: AuthProps): JSX.Element | null {
+  // Track the previous `view` prop so we can re-sync internal state when the
+  // parent changes the view (e.g. opening the dialog with a different default
+  // view). This is the React-recommended pattern for syncing state to props —
+  // setState during render is allowed when guarded by an `if` check on a
+  // tracked-previous-value; React detects this and bails out of the re-render.
   const [authView, setAuthView] = useState<ViewType>(view)
+  const [prevView, setPrevView] = useState<ViewType>(view)
   const {
     loading,
     error,
@@ -571,11 +577,12 @@ function Auth({
     clearMessages,
   } = useAuthForm()
 
-  useEffect(() => {
+  if (prevView !== view) {
+    setPrevView(view)
     setAuthView(view)
     setError(null)
     setMessage(null)
-  }, [view, setError, setMessage])
+  }
 
   const setAuthViewAndClearMessages = useCallback(
     (newView: ViewType) => {

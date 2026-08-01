@@ -144,6 +144,16 @@ The palette is a single cool-blue tonal ramp from near-black to pale gray, with 
 
 **The Tonal Layering Rule.** Hierarchy is conveyed by surface tone, not by shadow. Background → Card → Popover → Secondary → Accent is a five-step ramp; each step is ≤5% lightness apart. Shadows (`shadow-sm`, `shadow-md` in the shadcn button) are allowed only as state response on a button or a focus ring on an input.
 
+### Documented Palette Exceptions
+
+Three categories of surfaces carry a small, fixed palette that intentionally diverges from the one-accent rule. Each is justified by a user-recognition argument (the palette is a known visual convention, not decoration) and is marked at the source with a `/* ── PALETTE — fixed by design ── */` comment block so the exception is reviewable in code review.
+
+**A4 Resume Sheet — print-fixed palette.** `components/resume/a4-blocks.tsx` and `a4-pager.tsx` use `slate-*` text on `bg-white` so the on-screen sheet is byte-identical to the printed page. The A4 sheet is a print artifact; substituting a tokenised dark-on-card surface would break the print fidelity. Tokens are not used because the print medium has no concept of a "primary" accent.
+
+**Resume Visualization Heatmap — GitHub Contribution palette.** `components/resume/contribution-heatmap.tsx` uses the GitHub Contribution Graph five-step green palette (`#ebedf0` → `#9be9a8` → `#40c463` → `#30a14e` → `#216e39`). This is a globally-recognized visual convention; substituting Bio Emerald would read as arbitrary. All non-palette colors in the component use semantic tokens.
+
+**Resume Visualization — categorical palettes.** `components/resume/language-chart.tsx` (language brand colors — TypeScript blue, Python blue, Go orange, etc.) and `components/resume/architecture-explorer.tsx` (frontend / api / database / infra layer colors) carry fixed categorical palettes because each viz relies on category differentiation to convey information. Mapping all categories to a single `--primary` would erase the information the chart exists to convey. All surrounding chrome (text, borders, tracks, hover states) uses semantic tokens.
+
 ## 3. Typography
 
 **Display / Body / Label Font:** Geist Sans (`Geist, system-ui, sans-serif`) — weights 400, 500, 600, 700. Vercel's open-source technical sans, designed for code UIs and AI tooling. Preloaded via `next/font/google` as `--font-sans`. The default is the most legible of the weights; 500 for labels, 600 for titles and headlines, 700 for display.

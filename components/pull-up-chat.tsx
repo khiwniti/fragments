@@ -47,7 +47,7 @@ export function PullUpChat({ agentId, title, description, defaultHeight = 50, in
   const dragStart = useCallback((clientY: number, currentHeight: number) => {
     setIsDragging(true)
     dragStartRef.current = { y: clientY, height: currentHeight }
-  }, [height])
+  }, [])
 
   // --- Shared drag move ---
   const dragMove = useCallback((clientY: number) => {

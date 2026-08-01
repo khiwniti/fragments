@@ -67,6 +67,10 @@ export function Conversation({ agentId = 'resume', initialPrompt }: { agentId?: 
     if (messages.length > 0 || isRunning) return
     autoSent.current = true
     consumedPrompt = prompt
+    // `send` resets error state and dispatches to the agent — the URL change
+    // IS the external system we're syncing to, so this setState-in-effect
+    // is the correct pattern (matches app/chat/page.tsx:167 convention).
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     send(prompt)
   }, [searchParams, send, messages.length, isRunning])
 
@@ -82,6 +86,8 @@ export function Conversation({ agentId = 'resume', initialPrompt }: { agentId?: 
     if (consumedPrompt !== null) return
     defaultSent.current = true
     consumedDefaultPrompt = true
+    // See note above: setState-in-effect is intentional for external-system sync.
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     send(initialPrompt)
   }, [initialPrompt, send, messages.length, isRunning])
 

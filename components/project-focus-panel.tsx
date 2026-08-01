@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react'
 import {
   useAgent,
   UseAgentUpdate,
@@ -37,16 +37,22 @@ const INITIAL_PROJECT_STATE: ProjectData & { analysis: string; improvements: str
   improvements: [],
 }
 
-function useMediaQuery(query: string) {
-  const [matches, setMatches] = useState(false)
-  useEffect(() => {
-    const mql = window.matchMedia(query)
-    setMatches(mql.matches)
-    const handler = (e: MediaQueryListEvent) => setMatches(e.matches)
-    mql.addEventListener('change', handler)
-    return () => mql.removeEventListener('change', handler)
-  }, [query])
-  return matches
+/**
+ * Subscribe to a CSS media query. Implemented via `useSyncExternalStore` so
+ * the initial value is read on first render (avoids the
+ * react-hooks/set-state-in-effect anti-pattern that `useEffect`-based
+ * matchMedia wrappers trigger under eslint-config-next@16).
+ */
+function useMediaQuery(query: string): boolean {
+  return useSyncExternalStore(
+    (onChange) => {
+      const mql = window.matchMedia(query)
+      mql.addEventListener('change', onChange)
+      return () => mql.removeEventListener('change', onChange)
+    },
+    () => window.matchMedia(query).matches,
+    () => false, // SSR fallback — assume desktop
+  )
 }
 
 function ProjectFocusInner({ project }: { project: ProjectData }) {
@@ -93,7 +99,9 @@ function ProjectFocusInner({ project }: { project: ProjectData }) {
     available: 'always',
   })
 
-  // Sync agent state -> local
+  // Sync agent state -> local. The AGUI snapshot IS the external system;
+  // setState here is the documented bridge, not a derived-state anti-pattern
+  // (matches the convention in app/chat/page.tsx:167).
   const agentState = agent.state as ProjectFocusState | undefined
 
   useEffect(() => {
@@ -107,10 +115,12 @@ function ProjectFocusInner({ project }: { project: ProjectData }) {
       const keys: string[] = []
       if (p.analysis && p.analysis !== state.analysis) keys.push('analysis')
       if (p.improvements && JSON.stringify(p.improvements) !== JSON.stringify(state.improvements)) keys.push('improvements')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (keys.length) setChangedKeys(prev => [...new Set([...prev, ...keys])])
       else setChangedKeys([])
       setState(next)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentState, isLoading])
 
   const setAgentState = (s: typeof state) => {
@@ -119,11 +129,12 @@ function ProjectFocusInner({ project }: { project: ProjectData }) {
     }
   }
 
-  // Set initial state on mount
+  // Set initial state on mount — intentionally one-shot, so no deps.
   useEffect(() => {
     if (!agentState?.project) {
       setAgentState(state)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   const handleImprove = useCallback(async () => {

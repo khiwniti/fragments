@@ -31,7 +31,9 @@ export function ResumeForm() {
   const [error, setError] = useState<string | null>(null)
   const isLoading = agent.isRunning
 
-  // Sync agent state -> local state
+  // Sync agent state -> local state. The AGUI snapshot IS the external system;
+  // setState here is the documented bridge, not a derived-state anti-pattern
+  // (matches the convention in app/chat/page.tsx:167).
   const agentState = agent.state as { resume?: { summary?: string; headline?: string; sections?: { title?: string; items?: { label?: string }[] }[] } } | undefined
 
   useEffect(() => {
@@ -46,6 +48,7 @@ export function ResumeForm() {
       const keys: string[] = []
       if (r.summary && r.summary !== state.summary) keys.push('summary')
       if (r.headline && r.headline !== state.headline) keys.push('headline')
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       if (keys.length) setChangedKeys(prev => [...new Set([...prev, ...keys])])
       else setChangedKeys([])
 
@@ -55,6 +58,7 @@ export function ResumeForm() {
         skills: prev.skills,
       }))
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [agentState, isLoading])
 
   const setAgentState = (s: ResumeFormState) => {

@@ -240,12 +240,21 @@ function DonutChart({
     return () => ro.disconnect()
   }, [size])
 
-  // Arc path helper
-  let cumulativeAngle = -Math.PI / 2 // Start from top
-  const arcs = data.map((lang) => {
+  // Arc path helper — use reduce so each iteration explicitly receives the
+  // previous angle instead of mutating a `let` accumulator (avoids the
+  // react-hooks/set-state-in-effect-style "reassign after render" warning).
+  const arcs = data.reduce<Array<{
+    path: string
+    lang: LanguageStat
+    startA: number
+    endA: number
+    midAngle: number
+    labelX: number
+    labelY: number
+  }>>((acc, lang) => {
+    const startA = acc.length === 0 ? -Math.PI / 2 : acc[acc.length - 1].endA
     const sliceAngle = (lang.percentage / (total || 100)) * 2 * Math.PI
-    const startA = cumulativeAngle
-    const endA = cumulativeAngle + sliceAngle
+    const endA = startA + sliceAngle
 
     const x1 = cx + innerR * Math.cos(startA)
     const y1 = cy + innerR * Math.sin(startA)
@@ -262,10 +271,9 @@ function DonutChart({
     const lx = cx + labelR * Math.cos(midAngle)
     const ly = cy + labelR * Math.sin(midAngle)
 
-    cumulativeAngle += sliceAngle
-
-    return { path, lang, startA, endA, midAngle, labelX: lx, labelY: ly }
-  })
+    acc.push({ path, lang, startA, endA, midAngle, labelX: lx, labelY: ly })
+    return acc
+  }, [])
 
   return (
     <div ref={wrapRef} className="w-full max-w-full">

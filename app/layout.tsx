@@ -2,6 +2,7 @@ import './globals.css'
 import { PostHogProvider, ThemeProvider } from './providers'
 import { Toaster } from '@/components/ui/toaster'
 import { Analytics } from '@vercel/analytics/next'
+import { ErrorBoundary } from '@/components/ui/error-boundary'
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 
@@ -49,7 +50,7 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            {children}
+            <ErrorBoundary>{children}</ErrorBoundary>
           </ThemeProvider>
           <Toaster />
           <Analytics />

@@ -75,6 +75,7 @@
     "prismjs": "^1.30.0",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "react-markdown": "^9.0.1",
     "react-textarea-autosize": "^8.5.3",
     "simple-icons": "^14.12.3",
     "tailwind-merge": "^2.5.2",
@@ -84,6 +85,7 @@
     "zod": "^3.23.8"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.10.0",
     "@playwright/test": "^1.60.0",
     "@tailwindcss/postcss": "^4.3.0",
     "@trivago/prettier-plugin-sort-imports": "^4.3.0",
